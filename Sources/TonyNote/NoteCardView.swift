@@ -1,0 +1,131 @@
+import SwiftUI
+import TonyNoteCore
+
+/// The floating card: a tab strip of notes over a warm-paper text editor.
+struct NoteCardView: View {
+    @ObservedObject var store: NoteStore
+    @ObservedObject var panelState: PanelState
+    var onEscape: () -> Void
+
+    @Environment(\.colorScheme) private var scheme
+    @FocusState private var editorFocused: Bool
+    /// Local mirror of the selected note's body, kept in sync both ways.
+    @State private var text: String = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            tabStrip
+            Rectangle()
+                .fill(Theme.border(scheme))
+                .frame(height: 1)
+            editor
+        }
+        .background(Theme.paper(scheme))
+        .clipShape(RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
+                .strokeBorder(Theme.border(scheme), lineWidth: 1)
+        )
+        .onExitCommand(perform: onEscape) // Escape hides the panel
+        .onAppear {
+            syncFromStore()
+            editorFocused = true
+        }
+        .onChange(of: store.selectedID) { _ in
+            syncFromStore()
+            editorFocused = true
+        }
+        .onChange(of: panelState.focusPulse) { _ in
+            editorFocused = true
+        }
+    }
+
+    // MARK: Tab strip
+
+    private var tabStrip: some View {
+        HStack(spacing: 8) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(store.notes) { note in
+                        tab(for: note)
+                    }
+                }
+                .padding(.vertical, 1)
+            }
+            Spacer(minLength: 2)
+            iconButton("plus", help: "New note") { store.createNote() }
+            iconButton("trash", help: "Delete this note") { store.deleteSelected() }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+
+    private func tab(for note: Note) -> some View {
+        let active = note.id == store.selectedID
+        return Button {
+            store.select(id: note.id)
+        } label: {
+            Text(note.title)
+                .font(.system(size: 12, weight: .medium))
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: 118)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 5)
+                .foregroundColor(active ? Theme.accentText(scheme) : Theme.muted(scheme))
+                .background(active ? Theme.accent(scheme) : Color.clear)
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule().strokeBorder(
+                        active ? Color.clear : Theme.border(scheme),
+                        lineWidth: 1
+                    )
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func iconButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(Theme.muted(scheme))
+                .frame(width: 28, height: 28)
+                .overlay(Circle().strokeBorder(Theme.border(scheme), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .help(help)
+    }
+
+    // MARK: Editor
+
+    private var editor: some View {
+        ZStack(alignment: .topLeading) {
+            if text.isEmpty {
+                Text("Jot anything...")
+                    .font(.system(size: 16, design: .serif))
+                    .foregroundColor(Theme.muted(scheme).opacity(0.7))
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 18)
+                    .allowsHitTesting(false)
+            }
+            TextEditor(text: $text)
+                .font(.system(size: 16, design: .serif)) // New York, the system serif
+                .lineSpacing(5)
+                .foregroundColor(Theme.ink(scheme))
+                .tint(Theme.ink(scheme))
+                .scrollContentBackground(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+                .focused($editorFocused)
+                .onChange(of: text) { newValue in
+                    store.updateSelected(body: newValue)
+                }
+        }
+        .background(Theme.paper(scheme))
+    }
+
+    private func syncFromStore() {
+        text = store.selectedNote?.body ?? ""
+    }
+}
