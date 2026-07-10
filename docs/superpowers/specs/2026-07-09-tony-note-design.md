@@ -2,6 +2,9 @@
 
 Date: 2026-07-09
 
+Note: the project was renamed to Feather shortly after this spec was written.
+Left as-written below; treat "TonyNote" as "Feather" throughout.
+
 ## What it is
 
 A macOS menu-bar app (no Dock icon). One floating "paper" card hovers over any app,

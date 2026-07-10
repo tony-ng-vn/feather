@@ -1,5 +1,5 @@
 import SwiftUI
-import TonyNoteCore
+import FeatherCore
 
 /// The floating card: a tab strip of notes over a warm-paper text editor.
 struct NoteCardView: View {

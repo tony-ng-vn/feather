@@ -1,10 +1,11 @@
-# TonyNote
+# Feather
 
 A floating sticky-note that hovers over any app on macOS. Summon it with a global
 hotkey, jot anything, dismiss. Lives in the menu bar, not the Dock.
 
 Warm Apple Books paper (New York serif) for the writing surface; clean Luma-style
-neutral chrome (SF Pro, rounded pills) for the tabs and buttons.
+neutral chrome (SF Pro, rounded pills) for the tabs and buttons. Native Swift, so it
+stays light -- no Electron/Chromium runtime along for the ride.
 
 ## Use
 
@@ -15,7 +16,7 @@ neutral chrome (SF Pro, rounded pills) for the tabs and buttons.
 - Drag the card by its top strip; it remembers where you left it.
 - Right-click the menu-bar icon for New Note / Show-Hide / Quit.
 
-Notes are stored locally at `~/Library/Application Support/TonyNote/notes.json`.
+Notes are stored locally at `~/Library/Application Support/Feather/notes.json`.
 No accounts, no sync, no cloud.
 
 ## Build
@@ -23,14 +24,14 @@ No accounts, no sync, no cloud.
 Needs the Xcode command-line tools (Swift 5.9+).
 
 ```sh
-./build.sh          # produces TonyNote.app
-open TonyNote.app   # run it
+./build.sh         # produces Feather.app
+open Feather.app   # run it
 ```
 
 To keep it around and always available:
 
 ```sh
-cp -r TonyNote.app /Applications/
+cp -r Feather.app /Applications/
 ```
 
 Then add it to System Settings -> General -> Login Items so it starts with your Mac.
@@ -41,12 +42,12 @@ It is locally compiled and unsigned, which is fine for an app you build yourself
 
 ```sh
 swift test    # NoteStore logic (persistence, tab titles, create/select/delete)
-swift build   # debug build at .build/debug/TonyNote
+swift build   # debug build at .build/debug/Feather
 ```
 
 Layout:
 
-- `Sources/TonyNoteCore` -- `Note` + `NoteStore` (pure, unit-tested logic).
-- `Sources/TonyNote` -- AppKit shell (`AppDelegate`, `FloatingPanel`, `HotKey`) plus
+- `Sources/FeatherCore` -- `Note` + `NoteStore` (pure, unit-tested logic).
+- `Sources/Feather` -- AppKit shell (`AppDelegate`, `FloatingPanel`, `HotKey`) plus
   the SwiftUI card (`NoteCardView`, `Theme`).
 - `docs/superpowers/specs/` -- the design spec.

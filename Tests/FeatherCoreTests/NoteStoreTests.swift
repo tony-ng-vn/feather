@@ -1,10 +1,10 @@
 import XCTest
-@testable import TonyNoteCore
+@testable import FeatherCore
 
 final class NoteStoreTests: XCTestCase {
     private func tempURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("TonyNoteTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("FeatherTests-\(UUID().uuidString)", isDirectory: true)
             .appendingPathComponent("notes.json")
     }
 

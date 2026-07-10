@@ -84,7 +84,7 @@ public final class NoteStore: ObservableObject {
             let data = try JSONEncoder().encode(notes)
             try data.write(to: fileURL, options: .atomic)
         } catch {
-            NSLog("TonyNote: failed to save notes: \(error)")
+            NSLog("Feather: failed to save notes: \(error)")
         }
     }
 
@@ -97,7 +97,7 @@ public final class NoteStore: ObservableObject {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return base
-            .appendingPathComponent("TonyNote", isDirectory: true)
+            .appendingPathComponent("Feather", isDirectory: true)
             .appendingPathComponent("notes.json")
     }
 }

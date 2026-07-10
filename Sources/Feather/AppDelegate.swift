@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 import Carbon.HIToolbox
-import TonyNoteCore
+import FeatherCore
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let store = NoteStore()
@@ -25,7 +25,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusItem.button else { return }
-        button.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: "TonyNote")
+        button.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: "Feather")
         button.image?.isTemplate = true
         button.target = self
         button.action = #selector(statusItemClicked)
@@ -45,7 +45,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "New Note", action: #selector(newNote), keyEquivalent: "")
         menu.addItem(withTitle: "Show / Hide  (Ctrl-Opt-N)", action: #selector(togglePanel), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit TonyNote", action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit Feather", action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
 
         // Show the menu once, then detach so the next left-click toggles instead.
@@ -140,7 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async { self?.togglePanel() }
         }
         if hotKey == nil {
-            NSLog("TonyNote: failed to register global hotkey (Ctrl-Opt-N)")
+            NSLog("Feather: failed to register global hotkey (Ctrl-Opt-N)")
         }
     }
 }

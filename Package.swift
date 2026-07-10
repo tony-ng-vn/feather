@@ -2,19 +2,19 @@
 import PackageDescription
 
 let package = Package(
-    name: "TonyNote",
+    name: "Feather",
     platforms: [.macOS(.v13)],
     targets: [
         // Pure, testable logic: the note model and on-disk store.
-        .target(name: "TonyNoteCore"),
+        .target(name: "FeatherCore"),
         // Native app shell (AppKit + SwiftUI). Depends on the core.
         .executableTarget(
-            name: "TonyNote",
-            dependencies: ["TonyNoteCore"]
+            name: "Feather",
+            dependencies: ["FeatherCore"]
         ),
         .testTarget(
-            name: "TonyNoteCoreTests",
-            dependencies: ["TonyNoteCore"]
+            name: "FeatherCoreTests",
+            dependencies: ["FeatherCore"]
         ),
     ]
 )
