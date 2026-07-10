@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotKey: HotKey?
 
     private let positionKey = "panelFrameOrigin"
+    private let sizeKey = "panelFrameSize"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory) // menu-bar only, no Dock icon
@@ -71,10 +72,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let root = NoteCardView(
             store: store,
             panelState: panelState,
-            onEscape: { [weak self] in self?.hidePanel() }
+            onEscape: { [weak self] in self?.hidePanel() },
+            onResize: { [weak self] dx, dy in self?.resizePanel(dx: dx, dy: dy) }
         )
         let hosting = NSHostingView(rootView: root)
         hosting.frame = NSRect(origin: .zero, size: Theme.panelSize)
+        // Content view must track the panel's size as the user drags the resize grip.
+        hosting.autoresizingMask = [.width, .height]
         panel.contentView = hosting
 
         NotificationCenter.default.addObserver(
@@ -83,7 +87,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWindow.didMoveNotification,
             object: panel
         )
-        restorePosition()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(panelResized),
+            name: NSWindow.didResizeNotification,
+            object: panel
+        )
+        restoreFrame()
     }
 
     @objc private func togglePanel() {
@@ -115,7 +125,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.set(NSStringFromPoint(panel.frame.origin), forKey: positionKey)
     }
 
-    private func restorePosition() {
+    @objc private func panelResized() {
+        UserDefaults.standard.set(NSStringFromSize(panel.frame.size), forKey: sizeKey)
+    }
+
+    private func restoreFrame() {
+        let size: NSSize
+        if let saved = UserDefaults.standard.string(forKey: sizeKey) {
+            size = NSSizeFromString(saved)
+        } else {
+            size = Theme.panelSize
+        }
+        panel.setFrame(NSRect(origin: panel.frame.origin, size: size), display: false)
+
         if let saved = UserDefaults.standard.string(forKey: positionKey) {
             panel.setFrameOrigin(NSPointFromString(saved))
             return
@@ -124,10 +146,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let screen = NSScreen.main {
             let visible = screen.visibleFrame
             panel.setFrameOrigin(NSPoint(
-                x: visible.maxX - Theme.panelSize.width - 16,
-                y: visible.maxY - Theme.panelSize.height - 8
+                x: visible.maxX - size.width - 16,
+                y: visible.maxY - size.height - 8
             ))
         }
+    }
+
+    /// Grows/shrinks the panel from its bottom-right corner grip, keeping the
+    /// top-left corner fixed so the card doesn't drift while resizing.
+    private func resizePanel(dx: CGFloat, dy: CGFloat) {
+        var frame = panel.frame
+        let maxSize = maxAllowedSize()
+
+        let newWidth = min(max(frame.width + dx, FloatingPanel.minSize.width), maxSize.width)
+        let newHeight = min(max(frame.height + dy, FloatingPanel.minSize.height), maxSize.height)
+        let actualDeltaHeight = newHeight - frame.height
+
+        frame.size.width = newWidth
+        frame.size.height = newHeight
+        frame.origin.y -= actualDeltaHeight // AppKit y grows upward; keep the top edge in place
+        panel.setFrame(frame, display: true)
+    }
+
+    private func maxAllowedSize() -> NSSize {
+        guard let screen = NSScreen.main else { return FloatingPanel.maxSize }
+        let visible = screen.visibleFrame
+        return NSSize(
+            width: min(FloatingPanel.maxSize.width, visible.width - 24),
+            height: min(FloatingPanel.maxSize.height, visible.height - 24)
+        )
     }
 
     // MARK: Hotkey

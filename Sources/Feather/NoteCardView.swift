@@ -6,11 +6,14 @@ struct NoteCardView: View {
     @ObservedObject var store: NoteStore
     @ObservedObject var panelState: PanelState
     var onEscape: () -> Void
+    /// Called with the per-frame drag delta while the corner grip is dragged.
+    var onResize: (CGFloat, CGFloat) -> Void
 
     @Environment(\.colorScheme) private var scheme
     @FocusState private var editorFocused: Bool
     /// Local mirror of the selected note's body, kept in sync both ways.
     @State private var text: String = ""
+    @State private var lastResizeTranslation: CGSize = .zero
 
     var body: some View {
         VStack(spacing: 0) {
@@ -26,6 +29,7 @@ struct NoteCardView: View {
             RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
                 .strokeBorder(Theme.border(scheme), lineWidth: 1)
         )
+        .overlay(alignment: .bottomTrailing) { resizeGrip }
         .onExitCommand(perform: onEscape) // Escape hides the panel
         .onAppear {
             syncFromStore()
@@ -127,5 +131,25 @@ struct NoteCardView: View {
 
     private func syncFromStore() {
         text = store.selectedNote?.body ?? ""
+    }
+
+    // MARK: Resize grip
+
+    private var resizeGrip: some View {
+        Image(systemName: "arrow.up.left.and.arrow.down.right")
+            .font(.system(size: 9, weight: .semibold))
+            .foregroundColor(Theme.muted(scheme).opacity(0.5))
+            .padding(8)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                    .onChanged { value in
+                        let dx = value.translation.width - lastResizeTranslation.width
+                        let dy = value.translation.height - lastResizeTranslation.height
+                        lastResizeTranslation = value.translation
+                        onResize(dx, dy)
+                    }
+                    .onEnded { _ in lastResizeTranslation = .zero }
+            )
     }
 }
