@@ -9,7 +9,9 @@ stays light -- no Electron/Chromium runtime along for the ride.
 
 ## Use
 
-- Summon / hide: press **Control-Option-N** anywhere, or click the menu-bar note icon.
+- Summon / hide: press **Control-Option-J** anywhere, or click the menu-bar note icon.
+  (Not N: Option-N is the US-layout dead key for combining tilde, which can collide
+  with accent input methods like Vietnamese IM.)
 - Escape hides it too. On summon it grabs focus so you can type immediately.
 - Tabs: click a tab to switch notes, `+` makes a new one, trash deletes the current one.
 - A tab's label is the note's first line. Everything autosaves.
