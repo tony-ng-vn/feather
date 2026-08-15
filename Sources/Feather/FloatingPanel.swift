@@ -30,6 +30,15 @@ final class FloatingPanel: NSPanel {
         animationBehavior = .utilityWindow
     }
 
+    /// Same contract as `ShortcutWindow`: the editor sees Command keys first,
+    /// then the card's own table. `NSPanel` cannot share that base class.
+    var shortcutHandler: ((NSEvent) -> Bool)?
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if super.performKeyEquivalent(with: event) { return true }
+        return shortcutHandler?(event) ?? false
+    }
+
     // Borderless windows refuse key/main by default; the user needs to type here.
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
