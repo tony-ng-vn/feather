@@ -76,6 +76,77 @@ final class WindowController: NSObject {
         showPanel()
     }
 
+    /// Soft-deletes the card's note and offers an undo for five seconds.
+    private func trashCardNote() {
+        guard let id = store.selectedID else { return }
+        store.delete(id: id)
+        normalizeCardSelection()
+        panelState.show(
+            CardPill(text: "Note moved to trash.", actionTitle: "Undo") { [weak self] in
+                self?.store.restore(id: id)
+                self?.store.select(id: id)
+            },
+            for: 5
+        )
+    }
+
+    /// Cmd-Shift-K on the card: the note graduates to the gallery and, unless it
+    /// is pinned, leaves the strip.
+    private func keepAsNote() {
+        guard let id = store.selectedID else { return }
+        store.promote(id: id)
+        normalizeCardSelection()
+        panelState.show(
+            CardPill(text: "Kept as note.", actionTitle: "Open") { [weak self] in
+                self?.openPage(id: id)
+            },
+            for: 3
+        )
+    }
+
+    /// The card only edits notes in its strip, so after a trash or a promote it
+    /// may need to move to another one.
+    private func normalizeCardSelection() {
+        if let id = store.selectedID, store.cardNotes.contains(where: { $0.id == id }) { return }
+        if let first = store.cardNotes.first {
+            store.select(id: first.id)
+        } else {
+            store.createNote()
+        }
+    }
+
+    private func stepCardNote(by delta: Int) {
+        let notes = store.cardNotes
+        guard !notes.isEmpty,
+              let current = store.selectedID,
+              let index = notes.firstIndex(where: { $0.id == current })
+        else { return }
+        store.select(id: notes[(index + delta + notes.count) % notes.count].id)
+    }
+
+    private func handleCardShortcut(_ event: NSEvent) -> Bool {
+        switch Shortcut.match(event) {
+        case .newNote:
+            store.createNote()
+        case .closeOrTrash, .trashNote:
+            trashCardNote()
+        case .previousNote:
+            stepCardNote(by: -1)
+        case .nextNote:
+            stepCardNote(by: 1)
+        case .openGallery:
+            openGallery()
+        case .toggleKeep:
+            keepAsNote()
+        case .togglePin:
+            guard let note = store.selectedNote else { return false }
+            store.setPinned(!note.pinned, id: note.id)
+        default:
+            return false
+        }
+        return true
+    }
+
     // MARK: - Gallery
 
     /// Opens, or raises, the single gallery window.
@@ -211,14 +282,20 @@ final class WindowController: NSObject {
             store: store,
             panelState: panelState,
             sessions: sessions,
-            onEscape: { [weak self] in self?.hidePanel() },
-            onResize: { [weak self] dx, dy in self?.resizePanel(dx: dx, dy: dy) }
+            actions: CardActions(
+                hide: { [weak self] in self?.hidePanel() },
+                resize: { [weak self] dx, dy in self?.resizePanel(dx: dx, dy: dy) },
+                newNote: { [weak self] in self?.store.createNote() },
+                trashNote: { [weak self] in self?.trashCardNote() },
+                openGallery: { [weak self] in self?.openGallery() }
+            )
         )
         let hosting = NSHostingView(rootView: root)
         hosting.frame = NSRect(origin: .zero, size: Theme.panelSize)
         // Content view must track the panel's size as the user drags the resize grip.
         hosting.autoresizingMask = [.width, .height]
         panel.contentView = hosting
+        panel.shortcutHandler = { [weak self] event in self?.handleCardShortcut(event) ?? false }
 
         NotificationCenter.default.addObserver(
             self, selector: #selector(panelMoved),

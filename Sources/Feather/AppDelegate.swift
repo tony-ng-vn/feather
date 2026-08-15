@@ -48,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let statusItem else { return }
         let menu = NSMenu()
         menu.addItem(withTitle: "New Note", action: #selector(newNote), keyEquivalent: "")
+        menu.addItem(withTitle: "Open Gallery", action: #selector(openGallery), keyEquivalent: "")
         menu.addItem(withTitle: "Show / Hide  (Ctrl-Opt-J)", action: #selector(togglePanel), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Feather", action: #selector(quit), keyEquivalent: "q")
@@ -61,6 +62,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func newNote() {
         windows.newNoteOnCard()
+    }
+
+    @objc private func openGallery() {
+        windows.openGallery()
     }
 
     @objc private func togglePanel() {

@@ -1,14 +1,22 @@
 import SwiftUI
 import FeatherCore
 
-/// The floating card: a tab strip of notes over a warm-paper text editor.
+/// What the card asks the window controller to do.
+struct CardActions {
+    var hide: () -> Void
+    /// Called with the per-frame drag delta while the corner grip is dragged.
+    var resize: (CGFloat, CGFloat) -> Void
+    var newNote: () -> Void
+    var trashNote: () -> Void
+    var openGallery: () -> Void
+}
+
+/// The floating card: a tab strip of quick and pinned notes over a warm-paper editor.
 struct NoteCardView: View {
     @ObservedObject var store: NoteStore
     @ObservedObject var panelState: PanelState
     let sessions: EditorSessions
-    var onEscape: () -> Void
-    /// Called with the per-frame drag delta while the corner grip is dragged.
-    var onResize: (CGFloat, CGFloat) -> Void
+    let actions: CardActions
 
     @Environment(\.colorScheme) private var scheme
     /// Local mirror of the selected note's body, kept in sync both ways.
@@ -29,8 +37,9 @@ struct NoteCardView: View {
             RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
                 .strokeBorder(Theme.border(scheme), lineWidth: 1)
         )
+        .overlay(alignment: .bottom) { pillOverlay }
         .overlay(alignment: .bottomTrailing) { resizeGrip }
-        .onExitCommand(perform: onEscape) // Escape hides the panel
+        .onExitCommand(perform: actions.hide) // Escape hides the panel
         .onAppear {
             syncFromStore()
             panelState.requestFocus()
@@ -47,15 +56,18 @@ struct NoteCardView: View {
         HStack(spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    ForEach(store.notes) { note in
+                    // Quick notes plus anything pinned, so the strip stays small
+                    // however big the library grows (spec 2).
+                    ForEach(store.cardNotes) { note in
                         tab(for: note)
                     }
                 }
                 .padding(.vertical, 1)
             }
             Spacer(minLength: 2)
-            iconButton("plus", help: "New note") { store.createNote() }
-            iconButton("trash", help: "Delete this note") { store.deleteSelected() }
+            iconButton("square.grid.2x2", label: "Open gallery", action: actions.openGallery)
+            iconButton("plus", label: "New note", action: actions.newNote)
+            iconButton("trash", label: "Move note to trash", action: actions.trashNote)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -86,7 +98,7 @@ struct NoteCardView: View {
         .buttonStyle(.plain)
     }
 
-    private func iconButton(_ symbol: String, help: String, action: @escaping () -> Void) -> some View {
+    private func iconButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .medium))
@@ -95,7 +107,8 @@ struct NoteCardView: View {
                 .overlay(Circle().strokeBorder(Theme.border(scheme), lineWidth: 1))
         }
         .buttonStyle(.plain)
-        .help(help)
+        .help(label)
+        .accessibilityLabel(label)
     }
 
     // MARK: Editor
@@ -115,7 +128,7 @@ struct NoteCardView: View {
                 style: .compact,
                 undoManager: sessions.undoManager(for: store.selectedID),
                 focusPulse: panelState.focusPulse,
-                onEscape: onEscape
+                onEscape: actions.hide
             )
             .onChange(of: text) { newValue in
                 store.updateSelected(body: newValue)
@@ -128,6 +141,33 @@ struct NoteCardView: View {
         text = store.selectedNote?.body ?? ""
     }
 
+    // MARK: Undo pill
+
+    @ViewBuilder
+    private var pillOverlay: some View {
+        if let pill = panelState.pill {
+            HStack(spacing: 10) {
+                Text(pill.text)
+                Button(pill.actionTitle) {
+                    pill.action()
+                    panelState.dismissPill()
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(Theme.link(scheme))
+            }
+            .font(.system(size: 12))
+            .foregroundColor(Theme.ink(scheme))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Theme.codeBackground(scheme))
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(Theme.border(scheme), lineWidth: 1))
+            .padding(.bottom, 14)
+            .transition(Motion.isReduced ? .identity : .opacity)
+            .animation(Motion.isReduced ? nil : .easeOut(duration: 0.18), value: pill.id)
+        }
+    }
+
     // MARK: Resize grip
 
     private var resizeGrip: some View {
@@ -136,13 +176,14 @@ struct NoteCardView: View {
             .foregroundColor(Theme.muted(scheme).opacity(0.5))
             .padding(8)
             .contentShape(Rectangle())
+            .accessibilityLabel("Resize card")
             .gesture(
                 DragGesture(minimumDistance: 0, coordinateSpace: .global)
                     .onChanged { value in
                         let dx = value.translation.width - lastResizeTranslation.width
                         let dy = value.translation.height - lastResizeTranslation.height
                         lastResizeTranslation = value.translation
-                        onResize(dx, dy)
+                        actions.resize(dx, dy)
                     }
                     .onEnded { _ in lastResizeTranslation = .zero }
             )
