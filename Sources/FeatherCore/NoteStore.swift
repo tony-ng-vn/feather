@@ -82,8 +82,14 @@ public final class NoteStore: ObservableObject {
     }
 
     public func updateSelected(body: String) {
-        guard let id = selectedID,
-              let idx = allNotes.firstIndex(where: { $0.id == id }) else { return }
+        guard let id = selectedID else { return }
+        update(id: id, body: body)
+    }
+
+    /// Edits any note, selected or not, so a page window can write its own note
+    /// without disturbing the card's selection.
+    public func update(id: UUID, body: String) {
+        guard let idx = allNotes.firstIndex(where: { $0.id == id }) else { return }
         guard allNotes[idx].body != body else { return } // avoid redundant writes on re-selection
         allNotes[idx].body = body
         allNotes[idx].updatedAt = now()

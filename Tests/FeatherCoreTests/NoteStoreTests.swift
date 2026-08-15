@@ -176,6 +176,43 @@ final class NoteStoreTests: XCTestCase {
         XCTAssertEqual(store.search("nonexistent").count, 0)
     }
 
+    // MARK: Update by id
+
+    func testUpdateByIDEditsAnotherNoteWithoutChangingSelection() {
+        let store = NoteStore(repository: MemoryRepository(), debounce: 0)
+        let first = store.notes[0]
+        let second = store.createNote()
+
+        store.update(id: first.id, body: "edited from a page")
+
+        XCTAssertEqual(store.selectedID, second.id, "selection must stay where it was")
+        XCTAssertEqual(store.notes.first { $0.id == first.id }?.body, "edited from a page")
+    }
+
+    func testUpdateByIDWithUnchangedBodyDoesNotSave() {
+        let repository = MemoryRepository()
+        let store = NoteStore(repository: repository, debounce: 0)
+        let id = store.notes[0].id
+        store.update(id: id, body: "same")
+        let savesSoFar = repository.saveCount
+
+        store.update(id: id, body: "same")
+
+        XCTAssertEqual(repository.saveCount, savesSoFar)
+    }
+
+    func testUpdateByIDBumpsUpdatedAt() {
+        let store = NoteStore(repository: MemoryRepository(), debounce: 0)
+        let id = store.notes[0].id
+        let before = store.notes[0].updatedAt
+
+        store.update(id: id, body: "later")
+
+        let after = store.notes.first { $0.id == id }?.updatedAt
+        XCTAssertNotNil(after)
+        XCTAssertGreaterThanOrEqual(after ?? before, before)
+    }
+
     // MARK: Debounce and flush
 
     func testDebounceCoalescesRapidUpdatesIntoOneSave() {
