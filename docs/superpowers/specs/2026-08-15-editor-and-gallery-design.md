@@ -150,6 +150,25 @@ Rules:
 - `Cmd-C` with no selection copies the whole note as markdown.
 - Drop of text, URL, or `.md`/`.txt` file onto the editor inserts the text or a link.
 
+### 3.7 Problem references (LeetCode)
+
+Typing a reference such as `leetcode 1`, `leetcode #1`, `lc 1`, `lc1`, or `LC-1` (case-insensitive) is detected by the inline scanner as `InlineKind.problemRef(site: .leetcode, number:)`.
+The typed text is never rewritten; the file on disk stays exactly what the user typed.
+
+Resolution is deterministic, no AI:
+
+- A bundled `leetcode-problems.json` (snapshot of the public `https://leetcode.com/api/problems/all/` list: number, title, slug, difficulty) ships with the app.
+- A `ProblemIndex` in `FeatherCore` loads it and refreshes it in the background at most once a week into `Application Support/Feather/leetcode.json`; the app works offline after first launch.
+- Known number: link to `https://leetcode.com/problems/<slug>/`; unknown number: link to `https://leetcode.com/problemset/?search=<number>` so a link is never dead.
+
+Rendering and interaction:
+
+- The reference is styled like a link. If the index knows the problem, a muted suffix with title and difficulty is drawn after it (a rendering attribute only, no inserted characters).
+- Cmd-click or `Cmd-Enter` opens the problem page; plain click edits.
+- `Cmd-Shift-L` on the caret line rewrites the reference into a real markdown link `[1. Two Sum](https://leetcode.com/problems/two-sum/)` for copying into other tools.
+
+The resolver table is per site so Codeforces or GitHub-issue style references can be added later without touching the scanner.
+
 ## 4. Gallery
 
 Window `GalleryWindow`, single instance, standard titled window with a hidden toolbar and the paper background.
@@ -258,6 +277,7 @@ Each step is a PR; each PR is several small commits (failing test, implementatio
 2. `Markup` core: classifier, inline scanner, edit helpers. Exhaustive unit tests, including empty input, deep nesting, mixed lists, fences, unterminated markers.
 3. `MarkdownTextView`: replace `TextEditor`, block styling, Return and Tab logic, hanging indent, per-note undo. Manual end-to-end check in the running app.
 4. Inline styling and shortcuts: bold, italic, code, strike, highlight, links, headings, list conversion, auto-pair, wrap-on-type, paste URL over selection.
+   4b. Problem references: `ProblemIndex` with bundled snapshot and weekly refresh, `problemRef` scanning, link rendering with title suffix, `Cmd-Shift-L` rewrite.
 5. Checkboxes: hit-testable box, `Cmd-Enter`, done styling, sort-completed option.
 6. Model and store: `kind`, `pinned`, promote and demote, search, reorder; card strip filtering; quick switcher.
 7. Gallery window.
