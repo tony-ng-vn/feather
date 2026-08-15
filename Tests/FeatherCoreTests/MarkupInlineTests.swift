@@ -147,4 +147,67 @@ final class MarkupInlineTests: XCTestCase {
         XCTAssertEqual(src[span.contentRange], "bold")
         XCTAssertEqual(span.markerRanges.map { String(src[$0]) }, ["**", "**"])
     }
+
+    // MARK: Problem references
+
+    func testProblemRefEveryForm() {
+        let forms = [
+            "leetcode 1", "leetcode #1", "leetcode-1",
+            "lc 1", "lc1", "lc#1", "LC-1",
+        ]
+        for form in forms {
+            let result = spans(form)
+            XCTAssertEqual(result.count, 1, form)
+            XCTAssertEqual(result[0].0, .problemRef(site: .leetcode, number: 1), form)
+            XCTAssertEqual(result[0].1, form, form)
+        }
+    }
+
+    func testProblemRefCaseInsensitive() {
+        let result = spans("LeetCode 42")
+        XCTAssertEqual(result[0].0, .problemRef(site: .leetcode, number: 42))
+    }
+
+    func testProblemRefUpToFiveDigits() {
+        let result = spans("lc 12345")
+        XCTAssertEqual(result[0].0, .problemRef(site: .leetcode, number: 12345))
+    }
+
+    func testProblemRefNotInsideWord() {
+        XCTAssertEqual(spans("calc 3").count, 0)
+    }
+
+    func testProblemRefKeywordAloneDoesNotMatch() {
+        XCTAssertEqual(spans("lc").count, 0)
+        XCTAssertEqual(spans("just some lc talk").count, 0)
+    }
+
+    func testProblemRefSixDigitsDoesNotMatch() {
+        XCTAssertEqual(spans("lc 123456").count, 0)
+    }
+
+    func testProblemRefInsideCodeSpanDoesNotMatch() {
+        let result = spans("see `leetcode 1` here")
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0].0, .code)
+    }
+
+    func testProblemRefInsideCodeLineDoesNotMatch() {
+        let src = "```\nleetcode 1\n```"
+        let lines = Markup.lines(in: src)
+        XCTAssertEqual(Markup.inlineSpans(in: src, line: lines[1]), [])
+    }
+
+    func testProblemRefLosesToLink() {
+        let result = spans("[leetcode 1](https://example.com)")
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0].0, .link(url: "https://example.com"))
+    }
+
+    func testProblemRefCoexistsWithBold() {
+        let result = spans("**bold** and leetcode 1")
+        XCTAssertEqual(result.count, 2)
+        XCTAssertEqual(result[0].0, .bold)
+        XCTAssertEqual(result[1].0, .problemRef(site: .leetcode, number: 1))
+    }
 }

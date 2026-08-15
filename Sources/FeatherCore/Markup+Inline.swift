@@ -1,5 +1,13 @@
 import Foundation
 
+/// A site a problem reference like "leetcode 1" resolves against.
+///
+/// Kept as a table (one case today) so a second site (Codeforces, a GitHub
+/// issue style) can be added later without touching the scanner's structure.
+public enum ProblemSite: String, Codable, Equatable {
+    case leetcode
+}
+
 /// What an inline span within a line's content is.
 public enum InlineKind: Equatable {
     case bold
@@ -9,6 +17,7 @@ public enum InlineKind: Equatable {
     case highlight
     case link(url: String)
     case bareURL(url: String)
+    case problemRef(site: ProblemSite, number: Int)
 }
 
 /// A run of text within a line carrying inline formatting.
@@ -72,6 +81,7 @@ extension Markup {
         if let span = matchItalic(text: text, at: i, end: end, marker: "*") { return span }
         if let span = matchItalic(text: text, at: i, end: end, marker: "_") { return span }
         if let span = matchBareURL(text: text, at: i, end: end) { return span }
+        if let span = matchProblemRef(text: text, at: i, end: end) { return span }
         return nil
     }
 
@@ -198,6 +208,67 @@ extension Markup {
             contentRange: i..<urlEnd,
             markerRanges: []
         )
+    }
+
+    // MARK: - Problem references ("leetcode 1", "lc#1", "LC-1", "lc1")
+
+    private static let problemKeywords: [(keyword: String, site: ProblemSite)] = [
+        ("leetcode", .leetcode),
+        ("lc", .leetcode),
+    ]
+
+    private static func matchProblemRef(text: String, at i: String.Index, end: String.Index) -> InlineSpan? {
+        // Word boundary before the keyword: not preceded by a letter or digit,
+        // so "calc 3" does not read "lc" out of the middle of a word.
+        if i > text.startIndex, isWordCharacter(text[text.index(before: i)]) {
+            return nil
+        }
+        for (keyword, site) in problemKeywords {
+            guard let afterKeyword = caseInsensitivePrefixEnd(keyword, in: text, at: i, end: end) else { continue }
+            var k = afterKeyword
+            // An optional space, then an optional "#" or "-": "leetcode #1", "lc-1", "lc#1" all read.
+            if k < end, text[k] == " " {
+                k = text.index(after: k)
+            }
+            if k < end, text[k] == "#" || text[k] == "-" {
+                k = text.index(after: k)
+            }
+            let digitsStart = k
+            var digitCount = 0
+            while k < end, digitCount < 5, text[k].isASCII, text[k].isNumber {
+                k = text.index(after: k)
+                digitCount += 1
+            }
+            guard digitCount >= 1 else { continue }
+            // A 6th digit means the number is out of range; not a match.
+            if k < end, text[k].isNumber { continue }
+            // Trailing boundary: end of text or a non-alphanumeric character.
+            if k < end, isWordCharacter(text[k]) { continue }
+            guard let number = Int(text[digitsStart..<k]) else { continue }
+            return InlineSpan(
+                kind: .problemRef(site: site, number: number),
+                range: i..<k,
+                contentRange: i..<k,
+                markerRanges: []
+            )
+        }
+        return nil
+    }
+
+    private static func isWordCharacter(_ ch: Character) -> Bool {
+        ch.isLetter || ch.isNumber
+    }
+
+    /// Case-insensitive prefix match; returns the index right after `keyword` if it matches.
+    private static func caseInsensitivePrefixEnd(
+        _ keyword: String, in text: String, at i: String.Index, end: String.Index
+    ) -> String.Index? {
+        var t = i
+        for ch in keyword {
+            guard t < end, text[t].lowercased() == String(ch) else { return nil }
+            t = text.index(after: t)
+        }
+        return t
     }
 
     // MARK: - Shared scan helpers
