@@ -34,10 +34,19 @@ struct EditorStyle {
         return headingSizes[index]
     }
 
+    /// New York, the system serif, at the requested weight.
+    func serifFont(size: CGFloat, weight: NSFont.Weight) -> NSFont {
+        let base = NSFont.systemFont(ofSize: size, weight: weight)
+        guard let descriptor = base.fontDescriptor.withDesign(.serif) else { return base }
+        return NSFont(descriptor: descriptor, size: size) ?? base
+    }
+
+    var bodyFont: NSFont { serifFont(size: bodySize, weight: .regular) }
+
     /// Width of the text column in points, or nil when it should follow the view.
-    func maxTextWidth(font: NSFont) -> CGFloat? {
+    var textColumnWidth: CGFloat? {
         guard let maxCharacters else { return nil }
-        let advance = ("0" as NSString).size(withAttributes: [.font: font]).width
+        let advance = ("0" as NSString).size(withAttributes: [.font: bodyFont]).width
         return CGFloat(maxCharacters) * advance
     }
 

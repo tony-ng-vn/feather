@@ -127,7 +127,7 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         ]
         switch line.kind {
         case .heading(let level):
-            attributes[.font] = serif(size: style.headingSize(level: level), weight: .semibold)
+            attributes[.font] = style.serifFont(size: style.headingSize(level: level), weight: .semibold)
         case .quote:
             attributes[.foregroundColor] = palette.muted
         case .codeLine, .fenceDelimiter:
@@ -152,7 +152,7 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
             // A touch heavier so the bullet reads as a glyph, not as punctuation.
             return [
                 .foregroundColor: palette.marker,
-                .font: serif(size: style.bodySize, weight: .medium),
+                .font: style.serifFont(size: style.bodySize, weight: .medium),
             ]
         default:
             return [.foregroundColor: palette.marker]
@@ -237,14 +237,7 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
         }
     }
 
-    private var bodyFont: NSFont { serif(size: style.bodySize, weight: .regular) }
-
-    /// New York, the system serif, at the requested weight.
-    private func serif(size: CGFloat, weight: NSFont.Weight) -> NSFont {
-        let base = NSFont.systemFont(ofSize: size, weight: weight)
-        guard let descriptor = base.fontDescriptor.withDesign(.serif) else { return base }
-        return NSFont(descriptor: descriptor, size: size) ?? base
-    }
+    private var bodyFont: NSFont { style.bodyFont }
 
     private func adding(_ traits: NSFontDescriptor.SymbolicTraits, to font: NSFont) -> NSFont {
         let descriptor = font.fontDescriptor.withSymbolicTraits(font.fontDescriptor.symbolicTraits.union(traits))
