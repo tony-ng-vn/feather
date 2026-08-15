@@ -3,7 +3,10 @@ import PackageDescription
 
 var targets: [Target] = [
     // Pure, testable logic: the note model and on-disk store. Builds on Linux too.
-    .target(name: "FeatherCore"),
+    .target(
+        name: "FeatherCore",
+        resources: [.copy("Resources/leetcode-problems.json")]
+    ),
     .testTarget(
         name: "FeatherCoreTests",
         dependencies: ["FeatherCore"]
