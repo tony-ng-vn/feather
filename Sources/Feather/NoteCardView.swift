@@ -10,7 +10,6 @@ struct NoteCardView: View {
     var onResize: (CGFloat, CGFloat) -> Void
 
     @Environment(\.colorScheme) private var scheme
-    @FocusState private var editorFocused: Bool
     /// Local mirror of the selected note's body, kept in sync both ways.
     @State private var text: String = ""
     @State private var lastResizeTranslation: CGSize = .zero
@@ -33,14 +32,11 @@ struct NoteCardView: View {
         .onExitCommand(perform: onEscape) // Escape hides the panel
         .onAppear {
             syncFromStore()
-            editorFocused = true
+            panelState.requestFocus()
         }
         .onChange(of: store.selectedID) { _ in
             syncFromStore()
-            editorFocused = true
-        }
-        .onChange(of: panelState.focusPulse) { _ in
-            editorFocused = true
+            panelState.requestFocus()
         }
     }
 
@@ -109,22 +105,20 @@ struct NoteCardView: View {
                 Text("Jot anything...")
                     .font(.system(size: 16, design: .serif))
                     .foregroundColor(Theme.muted(scheme).opacity(0.7))
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 18)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
                     .allowsHitTesting(false)
             }
-            TextEditor(text: $text)
-                .font(.system(size: 16, design: .serif)) // New York, the system serif
-                .lineSpacing(5)
-                .foregroundColor(Theme.ink(scheme))
-                .tint(Theme.ink(scheme))
-                .scrollContentBackground(.hidden)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 14)
-                .focused($editorFocused)
-                .onChange(of: text) { newValue in
-                    store.updateSelected(body: newValue)
-                }
+            MarkdownEditor(
+                text: $text,
+                style: .compact,
+                undoManager: panelState.undoManager(for: store.selectedID),
+                focusPulse: panelState.focusPulse,
+                onEscape: onEscape
+            )
+            .onChange(of: text) { newValue in
+                store.updateSelected(body: newValue)
+            }
         }
         .background(Theme.paper(scheme))
     }
