@@ -186,7 +186,7 @@ Actions:
 
 - Click or `Return` opens the note as a page and promotes a quick note to `note`.
 - Arrow keys move focus; `Cmd-1..9` open the nth visible card.
-- `Cmd-N` new note (opens a page); `Cmd-Delete` moves to trash; `Cmd-P` pins; drag reorders within Pinned.
+- `Cmd-N` new note (opens a page); `Cmd-Delete` moves to trash; `Cmd-Shift-P` pins, matching the card and the page; drag reorders within Pinned.
 - Trash items show a Restore button; "Empty trash" is behind a confirmation; auto-purge after 30 days.
 - Right-click menu: Open, Pin, Keep as note or Send to card, Export as Markdown, Move to Trash.
 
@@ -221,7 +221,7 @@ Card and page:
 | `Cmd-N` | new note |
 | `Cmd-W` | close page, or move card note to trash with undo toast |
 | `Cmd-P` | quick switcher over all notes (fuzzy title and body), `Return` opens |
-| `Cmd-[` / `Cmd-]` | previous or next note in the strip |
+| `Cmd-Option-[` / `Cmd-Option-]` | previous or next note in the strip (`Cmd-[` / `Cmd-]` stay indent and outdent in the editor) |
 | `Cmd-1..9` | in the switcher and gallery only, to avoid clashing with heading keys |
 | `Cmd-Shift-O` | open gallery |
 | `Cmd-Shift-K` | keep as note or send to card |
