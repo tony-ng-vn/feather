@@ -53,3 +53,29 @@ Layout:
 - `Sources/Feather` -- AppKit shell (`AppDelegate`, `FloatingPanel`, `HotKey`) plus
   the SwiftUI card (`NoteCardView`, `Theme`).
 - `docs/superpowers/specs/` -- the design spec.
+
+### Regenerating the LeetCode problem snapshot
+
+`Sources/FeatherCore/Resources/leetcode-problems.json` is a compact snapshot of
+LeetCode's public problem list, used offline to resolve `leetcode 1` / `lc 1`
+style references (see spec section 3.7). To refresh it:
+
+```sh
+curl -s https://leetcode.com/api/problems/all/ -o /tmp/lc.json
+python3 -c '
+import json
+d = json.load(open("/tmp/lc.json"))
+out = [
+    {"n": p["stat"]["frontend_question_id"],
+     "t": p["stat"]["question__title"],
+     "s": p["stat"]["question__title_slug"],
+     "d": p["difficulty"]["level"]}
+    for p in d["stat_status_pairs"]
+]
+out.sort(key=lambda x: x["n"])
+json.dump(out, open("Sources/FeatherCore/Resources/leetcode-problems.json", "w"), separators=(",", ":"))
+'
+rm /tmp/lc.json
+```
+
+Do not commit the raw API dump, only the compact snapshot it produces.
