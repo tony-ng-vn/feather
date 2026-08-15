@@ -14,6 +14,7 @@ final class PageState: ObservableObject {
 
 /// What a page asks the window controller to do on its behalf.
 struct PageActions {
+    var openGallery: () -> Void
     var close: () -> Void
 }
 
@@ -53,6 +54,14 @@ struct PageView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
+            Button(action: actions.openGallery) {
+                Label("Gallery", systemImage: "chevron.left")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Theme.muted(scheme))
+            }
+            .buttonStyle(.plain)
+            .help("Back to the gallery")
+            .accessibilityLabel("Back to the gallery")
             Spacer(minLength: 0)
             iconButton(
                 note?.pinned == true ? "pin.fill" : "pin",

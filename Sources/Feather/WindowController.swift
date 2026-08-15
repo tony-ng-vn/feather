@@ -1,5 +1,6 @@
 import AppKit
 import Combine
+import QuartzCore
 import SwiftUI
 import FeatherCore
 
@@ -13,6 +14,7 @@ final class WindowController: NSObject {
 
     /// Built on first use so the controller can hand itself to the card's actions.
     private lazy var panel: FloatingPanel = makePanel()
+    private var gallery: GalleryWindow?
     private var pages: [UUID: NoteWindow] = [:]
     private var storeObserver: AnyCancellable?
 
@@ -74,10 +76,35 @@ final class WindowController: NSObject {
         showPanel()
     }
 
+    // MARK: - Gallery
+
+    /// Opens, or raises, the single gallery window.
+    func openGallery() {
+        if let gallery {
+            present(gallery)
+            return
+        }
+        let window = GalleryWindow()
+        window.delegate = self
+        window.contentViewController = NSHostingController(rootView: GalleryView(
+            store: store,
+            actions: GalleryActions(
+                openPage: { [weak self] id, cardRect in self?.openPage(id: id, from: cardRect) },
+                newPage: { [weak self] in self?.newPage() },
+                close: { [weak window] in window?.performClose(nil) }
+            )
+        ))
+        window.setContentSize(GalleryWindow.defaultSize)
+        _ = window.setFrameAutosaveName("FeatherGallery")
+        gallery = window
+        present(window)
+    }
+
     // MARK: - Pages
 
-    /// Opens (or raises) the page window for a note.
-    func openPage(id: UUID) {
+    /// Opens (or raises) the page window for a note. `cardRect` is the gallery
+    /// card the note was opened from, in the gallery's own coordinates.
+    func openPage(id: UUID, from cardRect: CGRect? = nil) {
         if let existing = pages[id] {
             present(existing)
             return
@@ -89,7 +116,10 @@ final class WindowController: NSObject {
             state: window.state,
             noteID: id,
             sessions: sessions,
-            actions: PageActions(close: { [weak window] in window?.performClose(nil) })
+            actions: PageActions(
+                openGallery: { [weak self] in self?.openGallery() },
+                close: { [weak window] in window?.performClose(nil) }
+            )
         ))
         window.setContentSize(NoteWindow.defaultSize)
         // Per-note frame memory, so a note reopens where the user last left it.
@@ -99,7 +129,7 @@ final class WindowController: NSObject {
             return self.handlePageShortcut(event, window: window)
         }
         pages[id] = window
-        present(window)
+        present(window, from: cardRect.flatMap { screenRect($0) })
     }
 
     /// A new note that starts life as a page, leaving the card's own note alone.
@@ -111,9 +141,36 @@ final class WindowController: NSObject {
         openPage(id: note.id)
     }
 
-    private func present(_ window: NSWindow) {
+    /// Shows a window, growing it out of the gallery card it came from.
+    private func present(_ window: NSWindow, from sourceRect: NSRect? = nil) {
         NSApp.activate(ignoringOtherApps: true)
+        guard let sourceRect, !Motion.isReduced else {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let target = window.frame
+        window.setFrame(sourceRect, display: false)
+        window.alphaValue = 0
         window.makeKeyAndOrderFront(nil)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.25
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.22, 1, 0.36, 1)
+            window.animator().setFrame(target, display: true)
+            window.animator().alphaValue = 1
+        }
+    }
+
+    /// SwiftUI reports frames top-left down from the hosting view; AppKit screen
+    /// coordinates run bottom-left up.
+    private func screenRect(_ rect: CGRect) -> NSRect? {
+        guard let gallery, let content = gallery.contentView else { return nil }
+        let flipped = NSRect(
+            x: rect.minX,
+            y: content.bounds.height - rect.maxY,
+            width: rect.width,
+            height: rect.height
+        )
+        return gallery.convertToScreen(flipped)
     }
 
     private func handlePageShortcut(_ event: NSEvent, window: NoteWindow) -> Bool {
@@ -132,6 +189,8 @@ final class WindowController: NSObject {
             window.performClose(nil)
         case .focusMode:
             window.state.focusMode.toggle()
+        case .openGallery:
+            openGallery()
         default:
             return false
         }
@@ -235,7 +294,10 @@ final class WindowController: NSObject {
 extension WindowController: NSWindowDelegate {
     func windowWillClose(_ notification: Notification) {
         flush()
-        guard let window = notification.object as? NoteWindow else { return }
-        pages.removeValue(forKey: window.noteID)
+        if let page = notification.object as? NoteWindow {
+            pages.removeValue(forKey: page.noteID)
+        } else if let window = notification.object as? GalleryWindow, window === gallery {
+            gallery = nil
+        }
     }
 }
