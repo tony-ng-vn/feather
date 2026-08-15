@@ -567,4 +567,45 @@ extension Markup {
         let pos = Pos(line: newLineIndex, col: 0)
         return result(lines: lines, start: pos, end: pos)
     }
+
+    // MARK: - Problem reference rewrite (Cmd-Shift-L)
+
+    /// Rewrites every `problemRef` on the caret's line into a real markdown
+    /// link via `index`, for copying into tools that do not resolve refs.
+    /// The typed line itself is untouched if it has no problem references.
+    public static func rewriteProblemRef(
+        text: String, selection: Range<String.Index>, index: ProblemIndex
+    ) -> EditResult {
+        guard let line = containingLine(selection.lowerBound, in: Markup.lines(in: text)) else {
+            return EditResult(text: text, selection: selection)
+        }
+        let refs: [(range: Range<String.Index>, number: Int)] = Markup.inlineSpans(in: text, line: line)
+            .compactMap { span in
+                guard case .problemRef(_, let number) = span.kind else { return nil }
+                return (span.range, number)
+            }
+        guard !refs.isEmpty else { return EditResult(text: text, selection: selection) }
+
+        var newText = ""
+        var cursor = text.startIndex
+        var firstLinkEndOffset = 0
+        var builtLength = 0
+        for (i, ref) in refs.enumerated() {
+            newText += text[cursor..<ref.range.lowerBound]
+            builtLength += text.distance(from: cursor, to: ref.range.lowerBound)
+            let link = index.markdownLink(for: ref.number)
+            newText += link
+            builtLength += link.count
+            if i == 0 { firstLinkEndOffset = builtLength }
+            cursor = ref.range.upperBound
+        }
+        newText += text[cursor...]
+
+        let caret = stringIndex(firstLinkEndOffset, in: newText)
+        return EditResult(text: newText, selection: caret..<caret)
+    }
+
+    private static func containingLine(_ position: String.Index, in lines: [LineInfo]) -> LineInfo? {
+        lines.first { position >= $0.range.lowerBound && position <= $0.range.upperBound }
+    }
 }

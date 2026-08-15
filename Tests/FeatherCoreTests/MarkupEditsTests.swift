@@ -292,4 +292,43 @@ final class MarkupEditsTests: XCTestCase {
         XCTAssertEqual(Markup.title(of: ""), "New note")
         XCTAssertEqual(Markup.title(of: "\n\n   \n"), "New note")
     }
+
+    // MARK: rewriteProblemRef
+
+    private let twoSumIndex = ProblemIndex(problems: [
+        Problem(number: 1, title: "Two Sum", slug: "two-sum", difficulty: .easy),
+    ])
+
+    func testRewriteProblemRefKnown() {
+        let text = "working on leetcode 1 today"
+        let r = Markup.rewriteProblemRef(text: text, selection: caret(0, in: text), index: twoSumIndex)
+        XCTAssertEqual(r.text, "working on [1. Two Sum](https://leetcode.com/problems/two-sum/) today")
+        XCTAssertEqual(caretOffset(r), "working on [1. Two Sum](https://leetcode.com/problems/two-sum/)".count)
+    }
+
+    func testRewriteProblemRefUnknown() {
+        let text = "lc 9999"
+        let r = Markup.rewriteProblemRef(text: text, selection: caret(0, in: text), index: twoSumIndex)
+        XCTAssertEqual(r.text, "[LeetCode 9999](https://leetcode.com/problemset/?search=9999)")
+    }
+
+    func testRewriteProblemRefOnlyTouchesCaretLine() {
+        let text = "lc 1\nlc 1"
+        let r = Markup.rewriteProblemRef(text: text, selection: caret(0, in: text), index: twoSumIndex)
+        XCTAssertEqual(r.text, "[1. Two Sum](https://leetcode.com/problems/two-sum/)\nlc 1")
+    }
+
+    func testRewriteProblemRefMultipleOnSameLineCaretFollowsFirst() {
+        let text = "lc 1 and lc 1"
+        let r = Markup.rewriteProblemRef(text: text, selection: caret(0, in: text), index: twoSumIndex)
+        let expectedFirst = "[1. Two Sum](https://leetcode.com/problems/two-sum/)"
+        XCTAssertEqual(r.text, "\(expectedFirst) and \(expectedFirst)")
+        XCTAssertEqual(caretOffset(r), expectedFirst.count)
+    }
+
+    func testRewriteProblemRefNoopWhenLineHasNoRef() {
+        let text = "just plain text"
+        let r = Markup.rewriteProblemRef(text: text, selection: caret(0, in: text), index: twoSumIndex)
+        XCTAssertEqual(r.text, text)
+    }
 }
