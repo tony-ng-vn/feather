@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 /// Owns the notes and the current selection, and persists to disk.
 ///
