@@ -5,6 +5,7 @@ import FeatherCore
 struct NoteCardView: View {
     @ObservedObject var store: NoteStore
     @ObservedObject var panelState: PanelState
+    let sessions: EditorSessions
     var onEscape: () -> Void
     /// Called with the per-frame drag delta while the corner grip is dragged.
     var onResize: (CGFloat, CGFloat) -> Void
@@ -112,7 +113,7 @@ struct NoteCardView: View {
             MarkdownEditor(
                 text: $text,
                 style: .compact,
-                undoManager: panelState.undoManager(for: store.selectedID),
+                undoManager: sessions.undoManager(for: store.selectedID),
                 focusPulse: panelState.focusPulse,
                 onEscape: onEscape
             )
