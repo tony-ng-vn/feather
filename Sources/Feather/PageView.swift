@@ -32,7 +32,6 @@ struct PageView: View {
 
     @Environment(\.colorScheme) private var scheme
     @State private var text: String = ""
-    @State private var writer = BodyWriter()
 
     private var note: Note? { store.liveNotes.first { $0.id == noteID } }
 
@@ -48,10 +47,11 @@ struct PageView: View {
             text = note?.body ?? ""
             state.requestFocus()
         }
+        // The store debounces the write and the window controller flushes it when
+        // this window closes.
         .onChange(of: text) { newValue in
-            writer.schedule(body: newValue, id: noteID, store: store)
+            store.update(id: noteID, body: newValue)
         }
-        .onDisappear { writer.flush(store: store) }
     }
 
     @ViewBuilder
@@ -168,37 +168,5 @@ struct PageView: View {
         .buttonStyle(.plain)
         .help(label)
         .accessibilityLabel(label)
-    }
-}
-
-/// Coalesces page edits before they reach the store.
-///
-/// `NoteStore` writes through the current selection, which belongs to the card,
-/// so a page edit is a short transaction: select this note, write it, hand the
-/// selection straight back. Debouncing keeps that to once per pause in typing.
-final class BodyWriter {
-    private var pending: (body: String, id: UUID)?
-    private var timer: DispatchWorkItem?
-
-    func schedule(body: String, id: UUID, store: NoteStore, debounce: TimeInterval = 0.4) {
-        pending = (body, id)
-        timer?.cancel()
-        let work = DispatchWorkItem { [weak self] in self?.flush(store: store) }
-        timer = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + debounce, execute: work)
-    }
-
-    /// Writes any pending edit now. Called when the page goes away.
-    func flush(store: NoteStore) {
-        timer?.cancel()
-        timer = nil
-        guard let pending else { return }
-        self.pending = nil
-
-        let previous = store.selectedID
-        store.select(id: pending.id)
-        store.updateSelected(body: pending.body)
-        if let previous, previous != pending.id { store.select(id: previous) }
-        store.flush()
     }
 }
