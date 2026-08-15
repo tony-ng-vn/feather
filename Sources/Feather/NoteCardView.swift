@@ -9,6 +9,7 @@ struct CardActions {
     var newNote: () -> Void
     var trashNote: () -> Void
     var openGallery: () -> Void
+    var openPage: (UUID) -> Void
 }
 
 /// The floating card: a tab strip of quick and pinned notes over a warm-paper editor.
@@ -37,6 +38,7 @@ struct NoteCardView: View {
             RoundedRectangle(cornerRadius: Theme.cornerRadius, style: .continuous)
                 .strokeBorder(Theme.border(scheme), lineWidth: 1)
         )
+        .overlay { switcher }
         .overlay(alignment: .bottom) { pillOverlay }
         .overlay(alignment: .bottomTrailing) { resizeGrip }
         .onExitCommand(perform: actions.hide) // Escape hides the panel
@@ -139,6 +141,27 @@ struct NoteCardView: View {
 
     private func syncFromStore() {
         text = store.selectedNote?.body ?? ""
+    }
+
+    // MARK: Quick switcher
+
+    @ViewBuilder
+    private var switcher: some View {
+        if panelState.switcherOpen {
+            QuickSwitcher(store: store) { note in
+                panelState.switcherOpen = false
+                // In the strip: just switch tabs. Anywhere else: open its page.
+                if store.cardNotes.contains(where: { $0.id == note.id }) {
+                    store.select(id: note.id)
+                    panelState.requestFocus()
+                } else {
+                    actions.openPage(note.id)
+                }
+            } onClose: {
+                panelState.switcherOpen = false
+                panelState.requestFocus()
+            }
+        }
     }
 
     // MARK: Undo pill

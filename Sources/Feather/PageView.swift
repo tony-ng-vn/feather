@@ -6,6 +6,7 @@ final class PageState: ObservableObject {
     /// Focus mode hides the chrome and turns on typewriter scrolling (spec 5).
     @Published var focusMode = false
     @Published var focusPulse = 0
+    @Published var switcherOpen = false
 
     func requestFocus() {
         focusPulse &+= 1
@@ -15,6 +16,7 @@ final class PageState: ObservableObject {
 /// What a page asks the window controller to do on its behalf.
 struct PageActions {
     var openGallery: () -> Void
+    var openPage: (UUID) -> Void
     var close: () -> Void
 }
 
@@ -40,6 +42,7 @@ struct PageView: View {
             if !state.focusMode { footer }
         }
         .background(Theme.desk(scheme))
+        .overlay { switcher }
         .onAppear {
             text = note?.body ?? ""
             state.requestFocus()
@@ -48,6 +51,19 @@ struct PageView: View {
             writer.schedule(body: newValue, id: noteID, store: store)
         }
         .onDisappear { writer.flush(store: store) }
+    }
+
+    @ViewBuilder
+    private var switcher: some View {
+        if state.switcherOpen {
+            QuickSwitcher(store: store) { note in
+                state.switcherOpen = false
+                actions.openPage(note.id)
+            } onClose: {
+                state.switcherOpen = false
+                state.requestFocus()
+            }
+        }
     }
 
     // MARK: Chrome

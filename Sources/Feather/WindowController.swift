@@ -138,6 +138,8 @@ final class WindowController: NSObject {
             openGallery()
         case .toggleKeep:
             keepAsNote()
+        case .quickSwitcher:
+            openSwitcher(in: panel) { [weak self] in self?.panelState.switcherOpen = true }
         case .togglePin:
             guard let note = store.selectedNote else { return false }
             store.setPinned(!note.pinned, id: note.id)
@@ -189,6 +191,7 @@ final class WindowController: NSObject {
             sessions: sessions,
             actions: PageActions(
                 openGallery: { [weak self] in self?.openGallery() },
+                openPage: { [weak self] id in self?.openPage(id: id) },
                 close: { [weak window] in window?.performClose(nil) }
             )
         ))
@@ -262,10 +265,19 @@ final class WindowController: NSObject {
             window.state.focusMode.toggle()
         case .openGallery:
             openGallery()
+        case .quickSwitcher:
+            openSwitcher(in: window) { window.state.switcherOpen = true }
         default:
             return false
         }
         return true
+    }
+
+    /// The editor holds first responder, so it has to let go before the
+    /// switcher's text field can take it.
+    private func openSwitcher(in window: NSWindow, show: @escaping () -> Void) {
+        window.makeFirstResponder(nil)
+        show()
     }
 
     /// Closes pages whose note has been trashed or purged.
@@ -287,7 +299,8 @@ final class WindowController: NSObject {
                 resize: { [weak self] dx, dy in self?.resizePanel(dx: dx, dy: dy) },
                 newNote: { [weak self] in self?.store.createNote() },
                 trashNote: { [weak self] in self?.trashCardNote() },
-                openGallery: { [weak self] in self?.openGallery() }
+                openGallery: { [weak self] in self?.openGallery() },
+                openPage: { [weak self] id in self?.openPage(id: id) }
             )
         )
         let hosting = NSHostingView(rootView: root)

@@ -15,6 +15,7 @@ struct CardPill: Identifiable {
 final class PanelState: ObservableObject {
     @Published var focusPulse: Int = 0
     @Published var pill: CardPill?
+    @Published var switcherOpen = false
 
     func requestFocus() {
         focusPulse &+= 1
