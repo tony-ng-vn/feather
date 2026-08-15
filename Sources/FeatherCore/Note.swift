@@ -19,12 +19,8 @@ public struct Note: Codable, Identifiable, Equatable {
         self.updatedAt = updatedAt
     }
 
-    /// Tab label: first non-empty line, trimmed. Falls back to "New note".
+    /// Tab label: first non-empty line, markers and whitespace stripped. Falls back to "New note".
     public var title: String {
-        for line in body.split(separator: "\n", omittingEmptySubsequences: false) {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty { return trimmed }
-        }
-        return "New note"
+        Markup.title(of: body)
     }
 }
