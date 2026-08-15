@@ -14,6 +14,16 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/Feather"
 
+# FeatherCore ships the LeetCode snapshot in a SwiftPM resource bundle. Inside an app,
+# Bundle.module looks under Bundle.main.resourceURL, so the bundle has to travel along
+# or every problem reference resolves as unknown.
+RESOURCE_BUNDLE=".build/${CONFIG}/Feather_FeatherCore.bundle"
+if [ ! -d "$RESOURCE_BUNDLE" ]; then
+  echo "error: $RESOURCE_BUNDLE is missing; FeatherCore resources would not ship" >&2
+  exit 1
+fi
+cp -R "$RESOURCE_BUNDLE" "$APP/Contents/Resources/"
+
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
