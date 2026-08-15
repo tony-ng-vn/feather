@@ -11,6 +11,8 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
     var palette: EditorPalette
     /// Index of the caret's line, used only when `style.hidesMarkers` is on.
     var caretLineProvider: (() -> Int?)?
+    /// Resolves `leetcode 1` style references; nil until the host injects it.
+    var problems: ProblemIndexProvider?
 
     /// Restyling edits attributes, which re-enters `didProcessEditing`.
     private var isRestyling = false
@@ -189,6 +191,15 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
             )
         case .highlight:
             storage.addAttributes([.backgroundColor: palette.highlight], range: contentRange)
+        case .problemRef(_, let number):
+            // Styled like a link, with the title in a tooltip. The muted title and
+            // difficulty suffix drawn after the reference is a follow-up: TextKit
+            // cannot append text through attributes alone.
+            var attributes: [NSAttributedString.Key: Any] = [.foregroundColor: palette.link]
+            if let problem = problems?.index.problem(number: number) {
+                attributes[.toolTip] = "\(problem.number). \(problem.title) (\(problem.difficulty.label))"
+            }
+            storage.addAttributes(attributes, range: contentRange)
         case .link(let url), .bareURL(let url):
             var attributes: [NSAttributedString.Key: Any] = [.foregroundColor: palette.link]
             if let parsed = URL(string: url) { attributes[.link] = parsed }
@@ -249,5 +260,15 @@ final class MarkdownStyler: NSObject, NSTextStorageDelegate {
               let font = storage.attribute(.font, at: range.location, effectiveRange: nil) as? NSFont
         else { return bodyFont }
         return font
+    }
+}
+
+private extension Difficulty {
+    var label: String {
+        switch self {
+        case .easy: return "Easy"
+        case .medium: return "Medium"
+        case .hard: return "Hard"
+        }
     }
 }

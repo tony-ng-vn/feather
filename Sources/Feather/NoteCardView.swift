@@ -17,6 +17,7 @@ struct NoteCardView: View {
     @ObservedObject var store: NoteStore
     @ObservedObject var panelState: PanelState
     let sessions: EditorSessions
+    let problems: ProblemIndexProvider
     let actions: CardActions
 
     @Environment(\.colorScheme) private var scheme
@@ -130,6 +131,7 @@ struct NoteCardView: View {
                 style: .compact,
                 undoManager: sessions.undoManager(for: store.selectedID),
                 focusPulse: panelState.focusPulse,
+                problems: problems,
                 onEscape: actions.hide
             )
             .onChange(of: text) { newValue in

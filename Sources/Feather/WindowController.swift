@@ -11,6 +11,7 @@ final class WindowController: NSObject {
     private let store: NoteStore
     private let panelState = PanelState()
     private let sessions = EditorSessions()
+    private let problems = ProblemIndexProvider()
 
     /// Built on first use so the controller can hand itself to the card's actions.
     private lazy var panel: FloatingPanel = makePanel()
@@ -30,6 +31,7 @@ final class WindowController: NSObject {
     /// One-time launch work, after the app has finished starting up.
     func start() {
         store.purgeExpiredTrash()
+        problems.refreshIfNeeded()
         // A note trashed anywhere (card, page, gallery) must not leave its page open.
         storeObserver = store.objectWillChange.sink { [weak self] in
             DispatchQueue.main.async { self?.closePagesForGoneNotes() }
@@ -189,9 +191,10 @@ final class WindowController: NSObject {
             state: window.state,
             noteID: id,
             sessions: sessions,
+            problems: problems,
             actions: PageActions(
                 openGallery: { [weak self] in self?.openGallery() },
-                openPage: { [weak self] id in self?.openPage(id: id) },
+                openPage: { [weak self] other in self?.openPage(id: other) },
                 close: { [weak window] in window?.performClose(nil) }
             )
         ))
@@ -294,6 +297,7 @@ final class WindowController: NSObject {
             store: store,
             panelState: panelState,
             sessions: sessions,
+            problems: problems,
             actions: CardActions(
                 hide: { [weak self] in self?.hidePanel() },
                 resize: { [weak self] dx, dy in self?.resizePanel(dx: dx, dy: dy) },

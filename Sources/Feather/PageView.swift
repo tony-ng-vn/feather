@@ -27,6 +27,7 @@ struct PageView: View {
     @ObservedObject var state: PageState
     let noteID: UUID
     let sessions: EditorSessions
+    let problems: ProblemIndexProvider
     let actions: PageActions
 
     @Environment(\.colorScheme) private var scheme
@@ -134,6 +135,7 @@ struct PageView: View {
             undoManager: sessions.undoManager(for: noteID),
             focusPulse: state.focusPulse,
             keepsCaretCentered: state.focusMode,
+            problems: problems,
             onEscape: { state.focusMode = false }
         )
         .background(Theme.paper(scheme))

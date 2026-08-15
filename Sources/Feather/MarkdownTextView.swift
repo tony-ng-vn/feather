@@ -17,6 +17,11 @@ final class MarkdownTextView: NSTextView {
     /// focus mode is on (spec 5).
     var keepsCaretCentered = false
 
+    /// Shared LeetCode index, so a background refresh reaches every open editor.
+    var problems: ProblemIndexProvider? {
+        didSet { styler.problems = problems }
+    }
+
     /// One undo manager per note, injected by the host (spec 3.5).
     var noteUndoManager: UndoManager?
     override var undoManager: UndoManager? { noteUndoManager ?? super.undoManager }
@@ -278,6 +283,10 @@ final class MarkdownTextView: NSTextView {
             applyMarkup { Markup.wrap(text: $0, selection: $1, marker: "==") }
         case "k" where !shift:
             insertLink()
+        case "l" where shift:
+            // Cmd-Shift-L: turn the references on this line into real markdown links.
+            guard let index = problems?.index else { return false }
+            applyMarkup { Markup.rewriteProblemRef(text: $0, selection: $1, index: index) }
         case "0", "1", "2", "3":
             let level = Int((event.charactersIgnoringModifiers ?? "0")) ?? 0
             applyMarkup { Markup.setHeading(text: $0, selection: $1, level: level) }
@@ -504,6 +513,8 @@ final class MarkdownTextView: NSTextView {
             switch span.kind {
             case .link(let url), .bareURL(let url):
                 return URL(string: url)
+            case .problemRef(_, let number):
+                return problems?.index.url(for: number)
             default:
                 continue
             }

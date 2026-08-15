@@ -13,6 +13,8 @@ struct MarkdownEditor: NSViewRepresentable {
     let focusPulse: Int
     /// Typewriter scrolling, on in the page's focus mode.
     var keepsCaretCentered: Bool = false
+    /// Resolves LeetCode references (spec 3.7).
+    var problems: ProblemIndexProvider?
     var onEscape: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -25,6 +27,7 @@ struct MarkdownEditor: NSViewRepresentable {
             palette: EditorPalette.resolving(NSApplication.shared.effectiveAppearance)
         )
         textView.delegate = context.coordinator
+        textView.problems = problems
         textView.noteUndoManager = undoManager
         textView.onEscape = onEscape
         textView.keepsCaretCentered = keepsCaretCentered
@@ -44,6 +47,7 @@ struct MarkdownEditor: NSViewRepresentable {
     func updateNSView(_ scrollView: NSScrollView, context: Context) {
         guard let textView = scrollView.documentView as? MarkdownTextView else { return }
         context.coordinator.text = $text
+        textView.problems = problems
         textView.noteUndoManager = undoManager
         textView.onEscape = onEscape
         textView.keepsCaretCentered = keepsCaretCentered
