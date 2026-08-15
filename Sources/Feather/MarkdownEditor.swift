@@ -11,6 +11,8 @@ struct MarkdownEditor: NSViewRepresentable {
     let undoManager: UndoManager?
     /// Bumped by the host to pull first responder back to the editor.
     let focusPulse: Int
+    /// Typewriter scrolling, on in the page's focus mode.
+    var keepsCaretCentered: Bool = false
     var onEscape: () -> Void
 
     func makeCoordinator() -> Coordinator {
@@ -25,6 +27,7 @@ struct MarkdownEditor: NSViewRepresentable {
         textView.delegate = context.coordinator
         textView.noteUndoManager = undoManager
         textView.onEscape = onEscape
+        textView.keepsCaretCentered = keepsCaretCentered
         textView.setText(text)
 
         let scrollView = NSScrollView()
@@ -43,6 +46,7 @@ struct MarkdownEditor: NSViewRepresentable {
         context.coordinator.text = $text
         textView.noteUndoManager = undoManager
         textView.onEscape = onEscape
+        textView.keepsCaretCentered = keepsCaretCentered
         textView.setText(text)
 
         if context.coordinator.lastFocusPulse != focusPulse {

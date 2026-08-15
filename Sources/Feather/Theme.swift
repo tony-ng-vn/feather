@@ -13,6 +13,13 @@ enum Theme {
                    : Color(red: 0.984, green: 0.972, blue: 0.949) // #FBF8F2
     }
 
+    /// The desk the page sits on: a shade deeper than the paper, so a page window
+    /// reads as a sheet rather than as a full-bleed background.
+    static func desk(_ s: ColorScheme) -> Color {
+        s == .dark ? Color(red: 0.086, green: 0.082, blue: 0.072)
+                   : Color(red: 0.953, green: 0.933, blue: 0.894) // #F3EEE4
+    }
+
     // Warm near-black ink / warm off-white.
     static func ink(_ s: ColorScheme) -> Color {
         s == .dark ? Color(red: 0.925, green: 0.905, blue: 0.865)
@@ -67,6 +74,38 @@ enum Theme {
     static func markerMuted(_ s: ColorScheme) -> Color {
         s == .dark ? Color(red: 0.450, green: 0.430, blue: 0.390)
                    : Color(red: 0.702, green: 0.671, blue: 0.612)
+    }
+
+    // MARK: Window backgrounds
+
+    /// Appearance-adaptive `NSColor`s, for the window chrome SwiftUI does not paint.
+    static let paperBackground = dynamic { paper($0) }
+    static let deskBackground = dynamic { desk($0) }
+
+    private static func dynamic(_ color: @escaping (ColorScheme) -> Color) -> NSColor {
+        NSColor(name: nil) { appearance in
+            NSColor(color(appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .dark : .light))
+        }
+    }
+}
+
+/// System Reduce Motion, read live so a change mid-session is respected.
+enum Motion {
+    static var isReduced: Bool {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    }
+}
+
+/// Muted "2 hours ago" stamps, shared by the gallery cards and the page footer.
+enum RelativeDate {
+    private static let formatter: RelativeDateTimeFormatter = {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter
+    }()
+
+    static func text(_ date: Date) -> String {
+        formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import SwiftUI
 import FeatherCore
 
@@ -12,6 +13,8 @@ final class WindowController: NSObject {
 
     /// Built on first use so the controller can hand itself to the card's actions.
     private lazy var panel: FloatingPanel = makePanel()
+    private var pages: [UUID: NoteWindow] = [:]
+    private var storeObserver: AnyCancellable?
 
     private let positionKey = "panelFrameOrigin"
     private let sizeKey = "panelFrameSize"
@@ -25,6 +28,10 @@ final class WindowController: NSObject {
     /// One-time launch work, after the app has finished starting up.
     func start() {
         store.purgeExpiredTrash()
+        // A note trashed anywhere (card, page, gallery) must not leave its page open.
+        storeObserver = store.objectWillChange.sink { [weak self] in
+            DispatchQueue.main.async { self?.closePagesForGoneNotes() }
+        }
         showPanel()
     }
 
@@ -65,6 +72,78 @@ final class WindowController: NSObject {
     func newNoteOnCard() {
         store.createNote()
         showPanel()
+    }
+
+    // MARK: - Pages
+
+    /// Opens (or raises) the page window for a note.
+    func openPage(id: UUID) {
+        if let existing = pages[id] {
+            present(existing)
+            return
+        }
+        let window = NoteWindow(noteID: id)
+        window.delegate = self
+        window.contentViewController = NSHostingController(rootView: PageView(
+            store: store,
+            state: window.state,
+            noteID: id,
+            sessions: sessions,
+            actions: PageActions(close: { [weak window] in window?.performClose(nil) })
+        ))
+        window.setContentSize(NoteWindow.defaultSize)
+        // Per-note frame memory, so a note reopens where the user last left it.
+        _ = window.setFrameAutosaveName("FeatherPage-\(id.uuidString)")
+        window.shortcutHandler = { [weak self, weak window] event in
+            guard let self, let window else { return false }
+            return self.handlePageShortcut(event, window: window)
+        }
+        pages[id] = window
+        present(window)
+    }
+
+    /// A new note that starts life as a page, leaving the card's own note alone.
+    func newPage() {
+        let previous = store.selectedID
+        let note = store.createNote()
+        store.promote(id: note.id)
+        if let previous { store.select(id: previous) }
+        openPage(id: note.id)
+    }
+
+    private func present(_ window: NSWindow) {
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func handlePageShortcut(_ event: NSEvent, window: NoteWindow) -> Bool {
+        let id = window.noteID
+        switch Shortcut.match(event) {
+        case .newNote:
+            newPage()
+        case .closeOrTrash:
+            window.performClose(nil)
+        case .trashNote:
+            store.delete(id: id)
+        case .togglePin:
+            store.setPinned(!(store.liveNotes.first { $0.id == id }?.pinned ?? false), id: id)
+        case .toggleKeep:
+            store.demote(id: id) // "Send to card": the note belongs to the strip again
+            window.performClose(nil)
+        case .focusMode:
+            window.state.focusMode.toggle()
+        default:
+            return false
+        }
+        return true
+    }
+
+    /// Closes pages whose note has been trashed or purged.
+    private func closePagesForGoneNotes() {
+        let live = Set(store.liveNotes.map { $0.id })
+        for (id, window) in pages where !live.contains(id) {
+            window.performClose(nil)
+        }
     }
 
     private func makePanel() -> FloatingPanel {
@@ -150,5 +229,13 @@ final class WindowController: NSObject {
             width: min(FloatingPanel.maxSize.width, visible.width - 24),
             height: min(FloatingPanel.maxSize.height, visible.height - 24)
         )
+    }
+}
+
+extension WindowController: NSWindowDelegate {
+    func windowWillClose(_ notification: Notification) {
+        flush()
+        guard let window = notification.object as? NoteWindow else { return }
+        pages.removeValue(forKey: window.noteID)
     }
 }

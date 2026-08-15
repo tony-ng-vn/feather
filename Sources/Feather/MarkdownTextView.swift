@@ -13,6 +13,10 @@ final class MarkdownTextView: NSTextView {
     /// is first responder, so the panel needs this hook to hide itself.
     var onEscape: (() -> Void)?
 
+    /// Typewriter scrolling: keep the caret line near the vertical center while
+    /// focus mode is on (spec 5).
+    var keepsCaretCentered = false
+
     /// One undo manager per note, injected by the host (spec 3.5).
     var noteUndoManager: UndoManager?
     override var undoManager: UndoManager? { noteUndoManager ?? super.undoManager }
@@ -169,6 +173,25 @@ final class MarkdownTextView: NSTextView {
     }
 
     // MARK: - Key handling
+
+    override func didChangeText() {
+        super.didChangeText()
+        centerCaretLine()
+    }
+
+    /// Scrolls the caret line to the middle of the visible area. No animation is
+    /// used, so this needs no Reduce Motion branch.
+    private func centerCaretLine() {
+        guard keepsCaretCentered,
+              let window,
+              let clip = enclosingScrollView?.contentView
+        else { return }
+        let onScreen = firstRect(forCharacterRange: selectedRange, actualRange: nil)
+        guard onScreen.height > 0 else { return }
+        let caret = convert(window.convertFromScreen(onScreen), from: nil)
+        let padding = max(0, (clip.bounds.height - caret.height) / 2)
+        scrollToVisible(caret.insetBy(dx: 0, dy: -padding))
+    }
 
     override func insertNewline(_ sender: Any?) {
         applyMarkup { Markup.insertNewline(text: $0, selection: $1) }
