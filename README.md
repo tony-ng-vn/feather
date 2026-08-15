@@ -90,6 +90,11 @@ Layout:
   `GalleryView`, `PageView`, `QuickSwitcher`, the `MarkdownTextView` editor, `Theme`).
 - `docs/superpowers/specs/` -- the design spec.
 
+### Changelog categories
+
+`CHANGELOG.md` groups every release by the area a change touched.
+Use these names, in this order: **Editor**, **Card**, **Gallery**, **Page**, **Storage**, **App**.
+
 ### Regenerating the LeetCode problem snapshot
 
 `Sources/FeatherCore/Resources/leetcode-problems.json` is a compact snapshot of

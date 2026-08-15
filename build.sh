@@ -32,8 +32,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleName</key><string>Feather</string>
   <key>CFBundleDisplayName</key><string>Feather</string>
   <key>CFBundleIdentifier</key><string>dev.twango.feather</string>
-  <key>CFBundleVersion</key><string>1.0.0</string>
-  <key>CFBundleShortVersionString</key><string>1.0.0</string>
+  <key>CFBundleVersion</key><string>2.0.0</string>
+  <key>CFBundleShortVersionString</key><string>2.0.0</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>Feather</string>
   <key>LSUIElement</key><true/>
