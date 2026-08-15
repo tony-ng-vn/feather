@@ -9,6 +9,7 @@ enum Shortcut: Equatable {
     case newNote
     /// Cmd-W: close a page window, or trash the card's note.
     case closeOrTrash
+    /// Cmd-Delete, honored by the gallery only: in an editor it deletes text.
     case trashNote
     case quickSwitcher
     case previousNote

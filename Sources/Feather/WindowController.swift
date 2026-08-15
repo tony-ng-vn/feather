@@ -127,10 +127,11 @@ final class WindowController: NSObject {
     }
 
     private func handleCardShortcut(_ event: NSEvent) -> Bool {
-        switch Shortcut.match(event) {
+        guard let shortcut = Shortcut.match(event) else { return false }
+        switch shortcut {
         case .newNote:
             store.createNote()
-        case .closeOrTrash, .trashNote:
+        case .closeOrTrash:
             trashCardNote()
         case .previousNote:
             stepCardNote(by: -1)
@@ -251,14 +252,13 @@ final class WindowController: NSObject {
     }
 
     private func handlePageShortcut(_ event: NSEvent, window: NoteWindow) -> Bool {
+        guard let shortcut = Shortcut.match(event) else { return false }
         let id = window.noteID
-        switch Shortcut.match(event) {
+        switch shortcut {
         case .newNote:
             newPage()
         case .closeOrTrash:
             window.performClose(nil)
-        case .trashNote:
-            store.delete(id: id)
         case .togglePin:
             store.setPinned(!(store.liveNotes.first { $0.id == id }?.pinned ?? false), id: id)
         case .toggleKeep:

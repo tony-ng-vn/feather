@@ -20,7 +20,7 @@ final class NoteWindow: ShortcutWindow {
         )
         titlebarAppearsTransparent = true
         titleVisibility = .hidden
-        backgroundColor = Theme.paperBackground
+        backgroundColor = Theme.deskBackground // the sheet inside is the paper
         isMovableByWindowBackground = true
         minSize = NSSize(width: 520, height: 480)
     }

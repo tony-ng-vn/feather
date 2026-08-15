@@ -41,6 +41,8 @@ struct NoteCardView: View {
         )
         .overlay { switcher }
         .overlay(alignment: .bottom) { pillOverlay }
+        // Driven from here, so the pill's insertion and removal both animate.
+        .animation(Motion.isReduced ? nil : .easeOut(duration: 0.18), value: panelState.pill?.id)
         .overlay(alignment: .bottomTrailing) { resizeGrip }
         .onExitCommand(perform: actions.hide) // Escape hides the panel
         .onAppear {
@@ -189,7 +191,6 @@ struct NoteCardView: View {
             .overlay(Capsule().strokeBorder(Theme.border(scheme), lineWidth: 1))
             .padding(.bottom, 14)
             .transition(Motion.isReduced ? .identity : .opacity)
-            .animation(Motion.isReduced ? nil : .easeOut(duration: 0.18), value: pill.id)
         }
     }
 
