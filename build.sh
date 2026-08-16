@@ -32,8 +32,8 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
   <key>CFBundleName</key><string>Qnote</string>
   <key>CFBundleDisplayName</key><string>Qnote</string>
   <key>CFBundleIdentifier</key><string>dev.twango.qnote</string>
-  <key>CFBundleVersion</key><string>2.1.0</string>
-  <key>CFBundleShortVersionString</key><string>2.1.0</string>
+  <key>CFBundleVersion</key><string>2.1.1</string>
+  <key>CFBundleShortVersionString</key><string>2.1.1</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleExecutable</key><string>Qnote</string>
   <key>LSUIElement</key><true/>

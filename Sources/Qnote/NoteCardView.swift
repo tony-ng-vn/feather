@@ -73,6 +73,7 @@ struct NoteCardView: View {
             iconButton("square.grid.2x2", label: "Open gallery", action: actions.openGallery)
             iconButton("plus", label: "New note", action: actions.newNote)
             iconButton("trash", label: "Move note to trash", action: actions.trashNote)
+            iconButton("xmark", label: "Hide", action: actions.hide)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
