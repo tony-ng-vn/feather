@@ -1,5 +1,5 @@
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
 /// Page chrome state, owned by `NoteWindow` so its key handling can reach it.
 final class PageState: ObservableObject {

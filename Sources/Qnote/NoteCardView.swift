@@ -1,5 +1,5 @@
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
 /// What the card asks the window controller to do.
 struct CardActions {

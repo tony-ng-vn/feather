@@ -1,4 +1,4 @@
-# Feather v2 -- editor, gallery, and page view design spec
+# Qnote v2 -- editor, gallery, and page view design spec
 
 Date: 2026-08-15
 Status: proposed, ready to execute
@@ -7,7 +7,7 @@ The shell (menu bar item, floating panel, hotkey, theme) from that spec stays as
 
 ## 1. Goal
 
-Turn Feather from "a text box in a lovely floating window" into a frictionless note tool.
+Turn Qnote from "a text box in a lovely floating window" into a frictionless note tool.
 Three things must be true when this spec is done:
 
 1. Typing feels like Bear or iA Writer: lists, indentation, checkboxes, headings, bold and italic just work from the keyboard, with markdown as the storage format.
@@ -46,7 +46,7 @@ One editor is used by both the card (compact skin) and the page (page skin); onl
 Guard rails:
 
 - Never touch `layoutManager`; that silently downgrades to TextKit 1. Assert `textLayoutManager != nil` in debug builds.
-- All syntax analysis lives in `FeatherCore/Markup.swift`, pure and unit tested. AppKit code only applies attributes and handles keys.
+- All syntax analysis lives in `QnoteCore/Markup.swift`, pure and unit tested. AppKit code only applies attributes and handles keys.
 - Styling is incremental: on `NSTextStorageDelegate.processEditing`, restyle only the edited paragraphs plus their neighbors, and full-restyle only on load.
 
 ### 3.2 Block syntax and behavior
@@ -125,7 +125,7 @@ Rules:
 - Auto-pair `()`, `[]`, `""`, and backticks; type-over the closer; Backspace right after an auto-pair removes both. Asterisks and underscores are not auto-paired.
 - `Cmd-1`, `Cmd-2`, `Cmd-3`: set the current line to H1, H2, H3; pressing the same again returns it to body. `Cmd-0`: body.
 - `Cmd-Shift-7` ordered, `Cmd-Shift-8` bullet, `Cmd-Shift-9` checkbox: convert the current line or selection.
-- Smart quotes and dashes follow the system setting, are always off inside code, and default off in Feather.
+- Smart quotes and dashes follow the system setting, are always off inside code, and default off in Qnote.
 - Cmd-click opens links; plain click edits.
 - Inline markers hide when the caret is off the span, show muted when the caret is inside it.
 
@@ -158,7 +158,7 @@ The typed text is never rewritten; the file on disk stays exactly what the user 
 Resolution is deterministic, no AI:
 
 - A bundled `leetcode-problems.json` (snapshot of the public `https://leetcode.com/api/problems/all/` list: number, title, slug, difficulty) ships with the app.
-- A `ProblemIndex` in `FeatherCore` loads it and refreshes it in the background at most once a week into `Application Support/Feather/leetcode.json`; the app works offline after first launch.
+- A `ProblemIndex` in `QnoteCore` loads it and refreshes it in the background at most once a week into `Application Support/Qnote/leetcode.json`; the app works offline after first launch.
 - Known number: link to `https://leetcode.com/problems/<slug>/`; unknown number: link to `https://leetcode.com/problemset/?search=<number>` so a link is never dead.
 
 Rendering and interaction:
@@ -234,7 +234,7 @@ The tab strip drag-reorders; overflow scrolls as today.
 
 Move from one JSON blob to one markdown file per note.
 
-- Folder: `~/Library/Application Support/Feather/notes/`.
+- Folder: `~/Library/Application Support/Qnote/notes/`.
 - File name: `<uuid>.md`. Contents: the body only, so the file is what the user typed.
 - Metadata: `notes/index.json` maps id to `kind`, `pinned`, `order`, `createdAt`, `updatedAt`, `deletedAt`, plus `selectedID`. The index is rebuilt from the folder if missing, using file dates.
 - Migration: on first launch, if the legacy `notes.json` exists, import every note, write the files, rename the legacy file to `notes.legacy.json`.
@@ -245,14 +245,14 @@ Move from one JSON blob to one markdown file per note.
 
 ## 8. Architecture
 
-FeatherCore (pure, tested):
+QnoteCore (pure, tested):
 
 - `Note`: add `kind`, `pinned`, `deletedAt`, keep `title` derived from the first non-empty line with `#` stripped.
 - `Markup`: line classifier (`LineKind`, depth, marker range, checkbox state), inline span scanner (`InlineSpan` with kind and marker ranges), and edit helpers: `continueList`, `indent`, `outdent`, `toggleCheckbox`, `setHeading`, `wrap`, `renumber`, `moveLine`. All operate on `String` plus ranges and return the new string and caret.
 - `NoteStore`: notes, selection, create/select/update/delete/restore/pin/promote/demote/reorder, search, and persistence through a `NoteRepository` protocol with `FileRepository` (real) and `MemoryRepository` (tests). Debounce lives in the store; the repository is synchronous.
 - `Calc` is out of scope for this spec but the line classifier reserves a `.math` kind so it can slot in later.
 
-Feather (AppKit + SwiftUI):
+Qnote (AppKit + SwiftUI):
 
 - `MarkdownTextView`: `NSTextView` subclass plus `NSViewRepresentable`; key handling, attribute application, checkbox hit testing, link clicks, undo registration.
 - `EditorStyle`: compact and page skins.
@@ -286,7 +286,7 @@ Each step is a PR; each PR is several small commits (failing test, implementatio
 
 ## 11. Verification
 
-- `swift test` covers all of `FeatherCore` including `Markup` and repository migration.
+- `swift test` covers all of `QnoteCore` including `Markup` and repository migration.
 - Each editor behavior in section 3 gets a checklist entry exercised in the running app before its PR is opened, including: nested list exit, ordered renumber, fence tab, undo across tab switch, checkbox click does not move caret, wrap-on-type with a selection, paste URL over selection.
 - Gallery and page: open, promote, pin, trash, restore, search, and keyboard-only navigation, verified by hand in the built app.
 - Reduce Motion enabled and disabled during the manual pass.

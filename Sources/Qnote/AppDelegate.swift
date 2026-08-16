@@ -29,7 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem = item
         guard let button = item.button else { return }
-        button.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: "Feather")
+        button.image = NSImage(systemSymbolName: "note.text", accessibilityDescription: "Qnote")
         button.image?.isTemplate = true
         button.target = self
         button.action = #selector(statusItemClicked)
@@ -51,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Open Gallery", action: #selector(openGallery), keyEquivalent: "")
         menu.addItem(withTitle: "Show / Hide  (Ctrl-Opt-J)", action: #selector(togglePanel), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit Feather", action: #selector(quit), keyEquivalent: "q")
+        menu.addItem(withTitle: "Quit Qnote", action: #selector(quit), keyEquivalent: "q")
         menu.items.forEach { $0.target = self }
 
         // Show the menu once, then detach so the next left-click toggles instead.
@@ -89,7 +89,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             DispatchQueue.main.async { self?.windows.togglePanel() }
         }
         if hotKey == nil {
-            NSLog("Feather: failed to register global hotkey (Ctrl-Opt-J)")
+            NSLog("Qnote: failed to register global hotkey (Ctrl-Opt-J)")
         }
     }
 }

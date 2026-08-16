@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
 /// Cmd-P: jump to any note without leaving the keyboard. Shown as an overlay
 /// inside whichever surface opened it (spec section 6).

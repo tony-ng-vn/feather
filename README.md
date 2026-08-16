@@ -1,4 +1,4 @@
-# Feather
+# Qnote
 
 A floating sticky-note that hovers over any app on macOS. Summon it with a global
 hotkey, jot anything, dismiss. Lives in the menu bar, not the Dock.
@@ -53,22 +53,24 @@ Editing keys (`Cmd-B`, `Cmd-I`, `Cmd-K`, `Cmd-]` / `Cmd-[` to indent, `Cmd-Enter
 tick a checkbox, and the rest) are listed in the design spec, section 3.
 
 Notes are stored locally as one markdown file per note at
-`~/Library/Application Support/Feather/notes/*.md`, with an `index.json` alongside
+`~/Library/Application Support/Qnote/notes/*.md`, with an `index.json` alongside
 them for pins, order, and trash. No accounts, no sync, no cloud.
+Notes written under the app's former name (Feather) move across automatically on
+first launch.
 
 ## Build
 
 Needs the Xcode command-line tools (Swift 5.9+).
 
 ```sh
-./build.sh         # produces Feather.app
-open Feather.app   # run it
+./build.sh         # produces Qnote.app
+open Qnote.app   # run it
 ```
 
 To keep it around and always available:
 
 ```sh
-cp -r Feather.app /Applications/
+cp -r Qnote.app /Applications/
 ```
 
 Then add it to System Settings -> General -> Login Items so it starts with your Mac.
@@ -79,13 +81,13 @@ It is locally compiled and unsigned, which is fine for an app you build yourself
 
 ```sh
 swift test    # NoteStore logic (persistence, tab titles, create/select/delete)
-swift build   # debug build at .build/debug/Feather
+swift build   # debug build at .build/debug/Qnote
 ```
 
 Layout:
 
-- `Sources/FeatherCore` -- `Note` + `NoteStore` (pure, unit-tested logic).
-- `Sources/Feather` -- AppKit shell (`AppDelegate`, `WindowController`, `FloatingPanel`,
+- `Sources/QnoteCore` -- `Note` + `NoteStore` (pure, unit-tested logic).
+- `Sources/Qnote` -- AppKit shell (`AppDelegate`, `WindowController`, `FloatingPanel`,
   `GalleryWindow`, `NoteWindow`, `HotKey`) plus the SwiftUI surfaces (`NoteCardView`,
   `GalleryView`, `PageView`, `QuickSwitcher`, the `MarkdownTextView` editor, `Theme`).
 - `docs/superpowers/specs/` -- the design spec.
@@ -97,7 +99,7 @@ Use these names, in this order: **Editor**, **Card**, **Gallery**, **Page**, **S
 
 ### Regenerating the LeetCode problem snapshot
 
-`Sources/FeatherCore/Resources/leetcode-problems.json` is a compact snapshot of
+`Sources/QnoteCore/Resources/leetcode-problems.json` is a compact snapshot of
 LeetCode's public problem list, used offline to resolve `leetcode 1` / `lc 1`
 style references (see spec section 3.7). To refresh it:
 
@@ -114,7 +116,7 @@ out = [
     for p in d["stat_status_pairs"]
 ]
 out.sort(key=lambda x: x["n"])
-json.dump(out, open("Sources/FeatherCore/Resources/leetcode-problems.json", "w"), separators=(",", ":"))
+json.dump(out, open("Sources/QnoteCore/Resources/leetcode-problems.json", "w"), separators=(",", ":"))
 '
 rm /tmp/lc.json
 ```

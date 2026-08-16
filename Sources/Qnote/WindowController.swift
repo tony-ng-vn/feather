@@ -2,9 +2,9 @@ import AppKit
 import Combine
 import QuartzCore
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
-/// Owns every surface Feather can show: the floating card, the gallery, and one
+/// Owns every surface Qnote can show: the floating card, the gallery, and one
 /// page window per open note. `AppDelegate` keeps only app lifecycle, the status
 /// item, and the global hotkey, and routes everything else here (spec section 8).
 final class WindowController: NSObject {
@@ -23,6 +23,8 @@ final class WindowController: NSObject {
     private let sizeKey = "panelFrameSize"
 
     override init() {
+        // The app used to be called Feather; carry those notes over before reading.
+        NoteStore.migrateLegacyAppDirectory()
         // Debounced writes (spec section 7); every hide, close, and quit flushes.
         store = NoteStore(repository: FileRepository(directory: NoteStore.defaultDirectory()))
         super.init()
@@ -171,7 +173,7 @@ final class WindowController: NSObject {
             )
         ))
         window.setContentSize(GalleryWindow.defaultSize)
-        _ = window.setFrameAutosaveName("FeatherGallery")
+        _ = window.setFrameAutosaveName("QnoteGallery")
         gallery = window
         present(window)
     }
@@ -201,7 +203,7 @@ final class WindowController: NSObject {
         ))
         window.setContentSize(NoteWindow.defaultSize)
         // Per-note frame memory, so a note reopens where the user last left it.
-        _ = window.setFrameAutosaveName("FeatherPage-\(id.uuidString)")
+        _ = window.setFrameAutosaveName("QnotePage-\(id.uuidString)")
         window.shortcutHandler = { [weak self, weak window] event in
             guard let self, let window else { return false }
             return self.handlePageShortcut(event, window: window)

@@ -12,7 +12,7 @@ final class GalleryWindow: ShortcutWindow {
             backing: .buffered,
             defer: false
         )
-        title = "Feather"
+        title = "Qnote"
         titlebarAppearsTransparent = true
         titleVisibility = .hidden
         backgroundColor = Theme.paperBackground

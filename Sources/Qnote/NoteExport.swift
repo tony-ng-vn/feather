@@ -1,6 +1,6 @@
 import AppKit
 import UniformTypeIdentifiers
-import FeatherCore
+import QnoteCore
 
 /// "Export as Markdown": the note's body, written wherever the user picks.
 enum NoteExport {
@@ -15,7 +15,7 @@ enum NoteExport {
             do {
                 try Data(note.body.utf8).write(to: url, options: .atomic)
             } catch {
-                NSLog("Feather: export failed: \(error)")
+                NSLog("Qnote: export failed: \(error)")
             }
         }
         if let window {

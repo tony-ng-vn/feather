@@ -2,8 +2,8 @@
 
 Date: 2026-07-09
 
-Note: the project was renamed to Feather shortly after this spec was written.
-Left as-written below; treat "TonyNote" as "Feather" throughout.
+Note: the project was renamed to Qnote shortly after this spec was written.
+Left as-written below; treat "TonyNote" as "Qnote" throughout.
 
 ## What it is
 

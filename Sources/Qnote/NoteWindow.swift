@@ -1,5 +1,5 @@
 import AppKit
-import FeatherCore
+import QnoteCore
 
 /// One page window per open note (spec section 5). Kept in `WindowController`'s
 /// `[UUID: NoteWindow]` map, at normal window level so the card floats above it.

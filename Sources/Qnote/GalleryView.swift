@@ -1,7 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
 /// What the gallery asks the window controller to do.
 struct GalleryActions {

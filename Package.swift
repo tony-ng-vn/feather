@@ -4,22 +4,22 @@ import PackageDescription
 var targets: [Target] = [
     // Pure, testable logic: the note model and on-disk store. Builds on Linux too.
     .target(
-        name: "FeatherCore",
+        name: "QnoteCore",
         resources: [.copy("Resources/leetcode-problems.json")]
     ),
     .testTarget(
-        name: "FeatherCoreTests",
-        dependencies: ["FeatherCore"]
+        name: "QnoteCoreTests",
+        dependencies: ["QnoteCore"]
     ),
 ]
 
 #if os(macOS)
 // Native app shell (AppKit + SwiftUI). Depends on the core.
-targets.append(.executableTarget(name: "Feather", dependencies: ["FeatherCore"]))
+targets.append(.executableTarget(name: "Qnote", dependencies: ["QnoteCore"]))
 #endif
 
 let package = Package(
-    name: "Feather",
+    name: "Qnote",
     platforms: [.macOS(.v13)],
     targets: targets
 )
