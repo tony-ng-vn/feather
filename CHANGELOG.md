@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.1
+
+2026-08-16
+
+**Card**
+
+- The tab strip has a close button again, next to the trash, which hides the card just like pressing Escape.
+
+---
+
 ## v2.1.0
 
 2026-08-16
