@@ -1,5 +1,5 @@
 import XCTest
-@testable import FeatherCore
+@testable import QnoteCore
 
 final class MarkupEditsTests: XCTestCase {
     /// Builds a caret selection at `offset` characters into `text`.

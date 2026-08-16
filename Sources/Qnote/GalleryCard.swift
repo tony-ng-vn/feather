@@ -1,5 +1,5 @@
 import SwiftUI
-import FeatherCore
+import QnoteCore
 
 /// One paper card in the gallery grid: title, up to three preview lines,
 /// a kind dot, and a relative date.

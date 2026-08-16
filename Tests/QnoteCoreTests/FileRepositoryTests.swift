@@ -1,5 +1,5 @@
 import XCTest
-@testable import FeatherCore
+@testable import QnoteCore
 
 final class FileRepositoryTests: XCTestCase {
     private var directory: URL!
@@ -7,7 +7,7 @@ final class FileRepositoryTests: XCTestCase {
     override func setUp() {
         super.setUp()
         directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FeatherRepoTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("QnoteRepoTests-\(UUID().uuidString)", isDirectory: true)
     }
 
     override func tearDown() {
@@ -113,5 +113,59 @@ final class FileRepositoryTests: XCTestCase {
         let reloaded = try FileRepository(directory: directory).load()
         XCTAssertEqual(reloaded.notes.count, 1)
         XCTAssertEqual(reloaded.notes.first?.id, a.id)
+    }
+}
+
+// MARK: - App directory migration
+
+final class AppDirectoryMigrationTests: XCTestCase {
+    private var root: URL!
+
+    override func setUp() {
+        super.setUp()
+        root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+    }
+
+    override func tearDown() {
+        try? FileManager.default.removeItem(at: root)
+        super.tearDown()
+    }
+
+    func testMovesOldDirectoryWhenNewOneIsAbsent() throws {
+        let old = root.appendingPathComponent("Feather", isDirectory: true)
+        let new = root.appendingPathComponent("Qnote", isDirectory: true)
+        try FileManager.default.createDirectory(at: old, withIntermediateDirectories: true)
+        try Data("hello".utf8).write(to: old.appendingPathComponent("notes.json"))
+
+        NoteStore.migrateAppDirectory(from: old, to: new)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: old.path))
+        let moved = try String(contentsOf: new.appendingPathComponent("notes.json"), encoding: .utf8)
+        XCTAssertEqual(moved, "hello")
+    }
+
+    func testLeavesNewDirectoryAloneWhenItAlreadyExists() throws {
+        let old = root.appendingPathComponent("Feather", isDirectory: true)
+        let new = root.appendingPathComponent("Qnote", isDirectory: true)
+        try FileManager.default.createDirectory(at: old, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: new, withIntermediateDirectories: true)
+        try Data("new".utf8).write(to: new.appendingPathComponent("marker"))
+
+        NoteStore.migrateAppDirectory(from: old, to: new)
+
+        // Both survive: the new directory wins and the old one is left for the user to inspect.
+        XCTAssertTrue(FileManager.default.fileExists(atPath: old.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: new.appendingPathComponent("marker").path))
+    }
+
+    func testDoesNothingWhenOldDirectoryIsAbsent() {
+        let old = root.appendingPathComponent("Feather", isDirectory: true)
+        let new = root.appendingPathComponent("Qnote", isDirectory: true)
+
+        NoteStore.migrateAppDirectory(from: old, to: new)
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: new.path))
     }
 }

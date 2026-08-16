@@ -1,5 +1,5 @@
 import XCTest
-@testable import FeatherCore
+@testable import QnoteCore
 
 final class MarkupLinesTests: XCTestCase {
     private func kinds(_ text: String) -> [LineKind] {

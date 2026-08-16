@@ -240,7 +240,7 @@ public final class NoteStore: ObservableObject {
         do {
             try repository.save(allNotes, selectedID: selectedID)
         } catch {
-            NSLog("Feather: failed to save notes: \(error)")
+            NSLog("Qnote: failed to save notes: \(error)")
         }
     }
 
@@ -254,11 +254,35 @@ public final class NoteStore: ObservableObject {
     public static func defaultDirectory() -> URL {
         FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Feather", isDirectory: true)
+            .appendingPathComponent("Qnote", isDirectory: true)
     }
 
     @available(*, deprecated, message: "notes now live under defaultDirectory()/notes; kept for one release")
     public static func defaultFileURL() -> URL {
         defaultDirectory().appendingPathComponent("notes.json")
+    }
+
+    /// Carries notes over from the app's former name so a rename does not look like data loss.
+    /// Call once at launch, before building a store.
+    public static func migrateLegacyAppDirectory() {
+        let support = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        migrateAppDirectory(
+            from: support.appendingPathComponent("Feather", isDirectory: true),
+            to: defaultDirectory()
+        )
+    }
+
+    /// Moves `old` to `new` when `new` does not exist yet. Never overwrites: if both
+    /// exist the new one wins and the old is left in place for the user to inspect.
+    public static func migrateAppDirectory(from old: URL, to new: URL) {
+        let fm = FileManager.default
+        guard fm.fileExists(atPath: old.path), !fm.fileExists(atPath: new.path) else { return }
+        do {
+            try fm.createDirectory(at: new.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try fm.moveItem(at: old, to: new)
+        } catch {
+            NSLog("Qnote: could not move notes from \(old.path): \(error)")
+        }
     }
 }

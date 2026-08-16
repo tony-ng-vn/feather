@@ -1,9 +1,9 @@
 import AppKit
-import FeatherCore
+import QnoteCore
 
 /// Applies markdown styling to an `NSTextStorage`.
 ///
-/// All syntax analysis comes from `FeatherCore.Markup`; this type only turns
+/// All syntax analysis comes from `QnoteCore.Markup`; this type only turns
 /// line and span information into text attributes, incrementally as the user
 /// types (spec 3.1).
 final class MarkdownStyler: NSObject, NSTextStorageDelegate {

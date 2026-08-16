@@ -1,8 +1,8 @@
 import AppKit
 import Carbon.HIToolbox
-import FeatherCore
+import QnoteCore
 
-/// The editor itself: a TextKit 2 `NSTextView` that drives `FeatherCore.Markup`
+/// The editor itself: a TextKit 2 `NSTextView` that drives `QnoteCore.Markup`
 /// for every structural edit and lets `MarkdownStyler` paint the result.
 ///
 /// The view never parses markdown on its own; it converts selections to

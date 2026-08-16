@@ -1,5 +1,5 @@
 import XCTest
-@testable import FeatherCore
+@testable import QnoteCore
 
 final class MarkupInlineTests: XCTestCase {
     private func spans(_ text: String) -> [(InlineKind, String)] {
@@ -54,9 +54,9 @@ final class MarkupInlineTests: XCTestCase {
     }
 
     func testLink() {
-        let result = spans("see [feather](https://example.com) here")
+        let result = spans("see [qnote](https://example.com) here")
         XCTAssertEqual(result[0].0, .link(url: "https://example.com"))
-        XCTAssertEqual(result[0].1, "[feather](https://example.com)")
+        XCTAssertEqual(result[0].1, "[qnote](https://example.com)")
     }
 
     func testBareURL() {

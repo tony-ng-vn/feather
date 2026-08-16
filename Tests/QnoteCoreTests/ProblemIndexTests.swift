@@ -1,10 +1,10 @@
 import XCTest
-@testable import FeatherCore
+@testable import QnoteCore
 
 final class ProblemIndexTests: XCTestCase {
     private func tempURL() -> URL {
         FileManager.default.temporaryDirectory
-            .appendingPathComponent("FeatherTests-\(UUID().uuidString)", isDirectory: true)
+            .appendingPathComponent("QnoteTests-\(UUID().uuidString)", isDirectory: true)
             .appendingPathComponent("leetcode.json")
     }
 

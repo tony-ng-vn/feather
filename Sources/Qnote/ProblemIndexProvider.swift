@@ -1,11 +1,11 @@
 import Foundation
-import FeatherCore
+import QnoteCore
 
 /// The live LeetCode index, shared by every editor so one background refresh
 /// reaches all of them (spec 3.7).
 ///
 /// Networking lives here; parsing, caching, and resolution stay pure in
-/// `FeatherCore.ProblemIndex`.
+/// `QnoteCore.ProblemIndex`.
 final class ProblemIndexProvider {
     private(set) var index: ProblemIndex
 
@@ -28,12 +28,12 @@ final class ProblemIndexProvider {
     func refreshIfNeeded() {
         guard needsRefresh, let url = ProblemIndexProvider.apiURL else { return }
         var request = URLRequest(url: url)
-        request.setValue("Feather", forHTTPHeaderField: "User-Agent")
+        request.setValue("Qnote", forHTTPHeaderField: "User-Agent")
 
         URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
             guard let self else { return }
             if let error {
-                NSLog("Feather: problem index refresh failed: \(error)")
+                NSLog("Qnote: problem index refresh failed: \(error)")
                 return
             }
             guard let data else { return }
@@ -41,7 +41,7 @@ final class ProblemIndexProvider {
                 let refreshed = try ProblemIndex.refreshedIndex(apiData: data, cacheURL: self.cacheURL)
                 DispatchQueue.main.async { self.index = refreshed }
             } catch {
-                NSLog("Feather: problem index refresh failed: \(error)")
+                NSLog("Qnote: problem index refresh failed: \(error)")
             }
         }.resume()
     }
