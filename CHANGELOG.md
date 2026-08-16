@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.1.0
+
+2026-08-16
+
+**App**
+
+- The app is now called Qnote. The menu-bar item, the built app, and the bundle identifier all use the new name.
+- Notes written under the old name are moved across automatically on first launch, from `Application Support/Feather` to `Application Support/Qnote`. If both folders somehow exist, the new one is used and the old one is left untouched so nothing can be lost.
+
+---
+
 ## v2.0.0
 
 2026-08-15
@@ -34,7 +45,7 @@
 
 **Storage**
 
-- Notes are now one markdown file per note in `~/Library/Application Support/Feather/notes/`, so what is on disk is exactly what you typed; an existing `notes.json` is imported once.
+- Notes are now one markdown file per note in `~/Library/Application Support/Qnote/notes/`, so what is on disk is exactly what you typed; an existing `notes.json` is imported once.
 - Saves are coalesced while you type and written out when the card hides, a window closes, the app loses focus, or you quit.
 - Deleting is reversible: trashed notes stay on disk and are cleared for good after 30 days.
 
